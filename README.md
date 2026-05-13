@@ -1,4 +1,4 @@
-# Kita — Chili Pepper Leaf Disease Classifier
+# Chili Pepper Leaf Disease Classifier
 
 > Comparative Analysis of Machine Learning Algorithms for Chili Pepper Leaf Disease Classification
 
@@ -50,36 +50,21 @@ thesis-app/
 ├── app/                        # Flutter mobile application
 │   ├── lib/
 │   │   ├── main.dart
+│   │   ├── constants.dart
 │   │   ├── screens/
 │   │   │   ├── auth/
 │   │   │   │   ├── login_screen.dart
 │   │   │   │   └── signup_screen.dart
 │   │   │   ├── dashboard_screen.dart
-│   │   │   ├── camera_screen.dart
-│   │   │   ├── results_screen.dart
-│   │   │   ├── history_screen.dart
+│   │   │   ├── scan_history_screen.dart
 │   │   │   └── account/
 │   │   │       ├── account_screen.dart
-│   │   │       └── my_account_screen.dart
 │   │   ├── models/
-│   │   │   ├── classifier.dart
-│   │   │   └── scan_result.dart
 │   │   └── services/
-│   │       ├── supabase_service.dart
-│   │       └── eigencam_service.dart
 │   ├── assets/
-│   │   ├── kita_mobilenet.tflite
-│   │   └── labels.txt
+│   │   ├── fonts/
+│   │   ├── icons
 │   └── pubspec.yaml
-│
-├── model/                      # Training scripts
-│   ├── train_keras.py          # Main training script (MobileNetV2 / ResNet50)
-│   ├── requirements.txt
-│   └── results/
-│       ├── confusion_matrix_mobilenet.png
-│       ├── confusion_matrix_resnet.png
-│       ├── training_curves_mobilenet.png
-│       └── training_curves_resnet.png
 │
 └── README.md
 ```
@@ -93,38 +78,6 @@ thesis-app/
 - Python 3.10+
 - Android Studio (for Android SDK)
 - A physical Android or iOS device
-
-### Model Training
-
-1. Install Python dependencies:
-```bash
-cd model
-pip install -r requirements.txt
-```
-
-2. Set your dataset path in `train_keras.py`:
-```python
-DATASET_DIR = r"path/to/your/datasets"
-```
-
-3. Train MobileNetV2:
-```python
-MODEL = "mobilenet"
-```
-```bash
-python train_keras.py
-```
-
-4. Train ResNet50:
-```python
-MODEL = "resnet"
-```
-```bash
-python train_keras.py
-```
-
-The script automatically converts the best model to TFLite after training.
-
 
 ## Dataset
 
