@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'constants.dart';
+import 'theme_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -9,7 +10,7 @@ import 'screens/scan_history_screen.dart';
 import 'screens/account/account_screen.dart';
 
 // ============================================================
-// SUPABASE INIT — add your credentials here when ready
+// SUPABASE INIT — uncomment and add credentials when ready
 // ============================================================
 // Future<void> main() async {
 //   WidgetsFlutterBinding.ensureInitialized();
@@ -17,11 +18,48 @@ import 'screens/account/account_screen.dart';
 //     url: 'YOUR_SUPABASE_URL',
 //     anonKey: 'YOUR_SUPABASE_ANON_KEY',
 //   );
-//   runApp(const ThesisApp());
+//   runApp(
+//     ChangeNotifierProvider(
+//       create: (_) => ThemeProvider(),
+//       child: const ThesisApp(),
+//     ),
+//   );
 // }
 
 void main() {
-  runApp(const ThesisApp());
+  runApp(
+    // ThemeProvider wraps the entire app so any screen can access it
+    // Access in any widget: context.read<ThemeProvider>() or
+    // watch changes: context.watch<ThemeProvider>()
+    _AppWithTheme(),
+  );
+}
+
+// Simple theme wrapper without extra packages
+class _AppWithTheme extends StatefulWidget {
+  @override
+  State<_AppWithTheme> createState() => _AppWithThemeState();
+}
+
+class _AppWithThemeState extends State<_AppWithTheme> {
+  final ThemeProvider _themeProvider = ThemeProvider();
+
+  @override
+  void initState() {
+    super.initState();
+    _themeProvider.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _themeProvider.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ThesisApp(themeProvider: _themeProvider);
+  }
 }
 
 // ============================================================
@@ -29,7 +67,9 @@ void main() {
 // ============================================================
 
 final _router = GoRouter(
-  // TODO: Change initialLocation to AppRoutes.login when auth is ready
+
+  // TODO: Change to AppRoutes.login when auth is ready
+  
   initialLocation: AppRoutes.dashboard,
   routes: [
     GoRoute(
@@ -52,6 +92,27 @@ final _router = GoRouter(
       path: AppRoutes.account,
       builder: (context, state) => const AccountScreen(),
     ),
+
+    // TODO: Uncomment as screens are built
+    // GoRoute(
+    //   path: AppRoutes.liveScan,
+    //   builder: (context, state) => const LiveScanScreen(),
+    // ),
+    // GoRoute(
+    //   path: AppRoutes.captureImage,
+    //   builder: (context, state) => const CaptureImageScreen(),
+    // ),
+    // GoRoute(
+    //   path: AppRoutes.scanResults,
+    //   builder: (context, state) {
+    //     final extra = state.extra as Map<String, dynamic>;
+    //     return ScanResultsScreen(scanData: extra);
+    //   },
+    // ),
+    // GoRoute(
+    //   path: AppRoutes.myAccount,
+    //   builder: (context, state) => const MyAccountScreen(),
+    // ),
   ],
 );
 
@@ -60,28 +121,18 @@ final _router = GoRouter(
 // ============================================================
 
 class ThesisApp extends StatelessWidget {
-  const ThesisApp({super.key});
+  final ThemeProvider themeProvider;
+  const ThesisApp({super.key, required this.themeProvider});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Kita',
+      title: 'thesis-app',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2C9585),
-        ),
-        fontFamily: 'Onest',
-        scaffoldBackgroundColor: const Color(0xFFF5F5F3),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2C9585),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: false,
-        ),
-      ),
-      routerConfig: _router,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeProvider.themeMode,
+      routerConfig: _router,  
     );
   }
 }

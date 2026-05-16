@@ -9,7 +9,7 @@ import '../constants.dart';
 class ScanResult {
   final String id;
   final String disease;
-  final String imageSource; // 'Scanned' or 'Uploaded'
+  final String imageSource;
   final String date;
   final double confidence;
   final String? imagePath;
@@ -38,20 +38,14 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   // ── Supabase data ─────────────────────────────────────────
   // TODO: Replace with real data from Supabase
-  // These will come from:
-  //   services/supabase_service.dart → fetchDashboardStats()
-  //   services/supabase_service.dart → fetchRecentScans(limit: 3)
+  // services/supabase_service.dart → fetchDashboardStats()
+  // services/supabase_service.dart → fetchRecentScans(limit: 3)
 
-  // Placeholder user data — replace with Supabase Auth user
   final String _userName = 'John Doe';
-
-  // Placeholder stats — replace with Supabase query results
   final int _totalScans = 13;
   final int _totalHealthy = 7;
-  final String? _mostFrequentDisease =
-      'Bacterial_Leaf_Spot'; // null if no scans
+  final String? _mostFrequentDisease = 'Bacterial_Leaf_Spot';
 
-  // Placeholder recent scans — replace with Supabase query results
   final List<ScanResult> _recentScans = [
     ScanResult(
       id: '1',
@@ -76,8 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ),
   ];
 
-  // ── Bottom nav index ──────────────────────────────────────
-  int _currentNavIndex = 1; // 0=History, 1=Home, 2=Account
+  int _currentNavIndex = 1;
 
   void _onNavTap(int index) {
     if (index == _currentNavIndex) return;
@@ -87,38 +80,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         context.push(AppRoutes.scanHistory);
         break;
       case 1:
-        break; // already on dashboard
+        break;
       case 2:
         context.push(AppRoutes.account);
         break;
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────
-
-  /// Formats disease name for display
-  String _formatDisease(String disease) {
-    return disease.replaceAll('_', ' ');
-  }
-
-  /// Returns display text for most frequent disease card
   String get _mostFrequentDisplay {
     if (_totalScans == 0 || _mostFrequentDisease == null) return 'None';
     return "Bacterial\nLeaf Spot";
   }
 
-  // ── UI ────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    
+    // Get theme-aware colors — pass context so it knows light/dark
+    final colors = AppColors.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       body: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(colors),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(
-                top: AppSpacing.xxl, // increase this for more space at top
+                top: AppSpacing.xxl,
                 left: AppSpacing.lg,
                 right: AppSpacing.lg,
                 bottom: AppSpacing.lg,
@@ -126,25 +114,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildActionButtons(),
+                  _buildActionButtons(colors),
                   const SizedBox(height: AppSpacing.md),
-                  _buildStatCards(),
+                  _buildStatCards(colors),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildRecentScansSection(),
+                  _buildRecentScansSection(colors),
                 ],
               ),
             ),
           ),
-          _buildBottomNav(),
+          _buildBottomNav(colors),
         ],
       ),
     );
   }
 
   // ── Header ────────────────────────────────────────────────
-  Widget _buildHeader() {
+  Widget _buildHeader(AppColors colors) {
     return Container(
-      color: AppColors.primary,
+      color: colors.primary,
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 32,
         left: AppSpacing.lg,
@@ -165,7 +153,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   height: 0.3,
                 ),
               ),
-              // const SizedBox(height: 0),
               Text(
                 _userName,
                 style: const TextStyle(
@@ -176,8 +163,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
-
-          // Avatar — TODO: replace with user's actual avatar from Supabase Storage
           GestureDetector(
             onTap: () => context.push(AppRoutes.account),
             child: CircleAvatar(
@@ -190,7 +175,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   height: 44,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Text(
-                    // Fallback to initials if image not found
                     _userName.split(' ').map((e) => e[0]).take(2).join(),
                     style: const TextStyle(
                       color: Colors.white,
@@ -207,7 +191,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ── Action buttons ────────────────────────────────────────
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(AppColors colors) {
     return Row(
       children: [
         Expanded(
@@ -215,9 +199,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Live Camera',
             sublabel: 'Real-time scan',
             iconPath: AppAssets.liveCameraIcon,
+            colors: colors,
             onTap: () {
-              // TODO: Navigate to live scan screen
-              // context.push(AppRoutes.liveScan);
+              // TODO: context.push(AppRoutes.liveScan);
             },
           ),
         ),
@@ -227,9 +211,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Capture Image',
             sublabel: 'Capture or upload',
             iconPath: AppAssets.captureImageIcon,
+            colors: colors,
             onTap: () {
-              // TODO: Navigate to capture image screen
-              // context.push(AppRoutes.captureImage);
+              // TODO: context.push(AppRoutes.captureImage);
             },
           ),
         ),
@@ -238,13 +222,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ── Stat cards ────────────────────────────────────────────
-  Widget _buildStatCards() {
+  Widget _buildStatCards(AppColors colors) {
     return Row(
       children: [
         Expanded(
           child: _StatCard(
             value: _totalScans == 0 ? '0' : '$_totalScans',
             label: 'Total Scans',
+            colors: colors,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -252,10 +237,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: _StatCard(
             value: _mostFrequentDisplay,
             label: 'Most Frequent',
+            colors: colors,
             valueColor: _totalScans == 0
-                ? AppColors.textSecondary
-                : AppColors.bacterial,
+                ? colors.textSecondary
+                : colors.bacterial,
             valueFontSize: _mostFrequentDisplay == 'None' ? 18 : 13,
+            valueFontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -263,9 +250,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: _StatCard(
             value: _totalHealthy == 0 ? '0' : '$_totalHealthy',
             label: 'Total Healthy',
+            colors: colors,
             valueColor: _totalHealthy == 0
-                ? AppColors.textPrimary
-                : AppColors.primaryDark,
+                ? colors.textPrimary
+                : colors.primaryDark,
           ),
         ),
       ],
@@ -273,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ── Recent scans ──────────────────────────────────────────
-  Widget _buildRecentScansSection() {
+  Widget _buildRecentScansSection(AppColors colors) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,33 +269,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Recent Scans',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               GestureDetector(
                 onTap: () => context.push(AppRoutes.scanHistory),
-                child: const Text(
+                child: Text(
                   'View All',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.primaryDark,
+                    color: colors.primaryDark,
                     decoration: TextDecoration.underline,
-                    decorationColor: AppColors.primaryDark,
+                    decorationColor: colors.primaryDark,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-
-          // Empty state
           if (_recentScans.isEmpty)
-            Expanded(child: _buildEmptyState())
+            Expanded(child: _buildEmptyState(colors))
           else
             Expanded(
               child: Column(
@@ -317,6 +303,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                         child: _ScanItem(
                           scan: scan,
+                          colors: colors,
                           onTap: () {
                             // TODO: Navigate to scan results from history
                             // context.push(
@@ -335,13 +322,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppColors colors) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -350,17 +337,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             AppAssets.historyIcon,
             width: 40,
             height: 40,
-            color: AppColors.primary,
+            color: colors.primary,
             errorBuilder: (_, __, ___) =>
-                const Icon(Icons.history, size: 40, color: AppColors.primary),
+                Icon(Icons.history, size: 40, color: colors.primary),
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text(
+          Text(
             'Your scan history will appear here.\nTap a button above to get started.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -370,9 +357,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ── Bottom nav ────────────────────────────────────────────
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(AppColors colors) {
     return Container(
-      color: AppColors.primary,
+      color: colors.primary,
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).padding.bottom + AppSpacing.sm,
         top: AppSpacing.md,
@@ -415,12 +402,14 @@ class _ActionButton extends StatelessWidget {
   final String sublabel;
   final String iconPath;
   final VoidCallback onTap;
+  final AppColors colors;
 
   const _ActionButton({
     required this.label,
     required this.sublabel,
     required this.iconPath,
     required this.onTap,
+    required this.colors,
   });
 
   @override
@@ -430,9 +419,9 @@ class _ActionButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -448,27 +437,24 @@ class _ActionButton extends StatelessWidget {
               iconPath,
               width: 40,
               height: 40,
-              errorBuilder: (_, __, ___) => const Icon(
+              errorBuilder: (_, __, ___) => Icon(
                 Icons.camera_alt_outlined,
                 size: 40,
-                color: AppColors.primaryDark,
+                color: colors.primaryDark,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
             Text(
               sublabel,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 11, color: colors.textSecondary),
             ),
           ],
         ),
@@ -480,6 +466,7 @@ class _ActionButton extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final String value;
   final String label;
+  final AppColors colors;
   final Color? valueColor;
   final double? valueFontSize;
   final FontWeight? valueFontWeight;
@@ -487,6 +474,7 @@ class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.value,
     required this.label,
+    required this.colors,
     this.valueColor,
     this.valueFontSize,
     this.valueFontWeight,
@@ -502,9 +490,9 @@ class _StatCard extends StatelessWidget {
           vertical: AppSpacing.md,
         ),
         decoration: BoxDecoration(
-          color: AppColors.surfaceGray,
+          color: colors.surfaceGray,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -514,19 +502,16 @@ class _StatCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: valueFontSize ?? 25,
-                fontWeight: FontWeight.w700,
+                fontWeight: valueFontWeight ?? FontWeight.w700,
                 fontFamily: 'Onest',
-                color: valueColor ?? AppColors.textPrimary,
+                color: valueColor ?? colors.textPrimary,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 10, color: colors.textSecondary),
             ),
           ],
         ),
@@ -538,8 +523,13 @@ class _StatCard extends StatelessWidget {
 class _ScanItem extends StatelessWidget {
   final ScanResult scan;
   final VoidCallback onTap;
+  final AppColors colors;
 
-  const _ScanItem({required this.scan, required this.onTap});
+  const _ScanItem({
+    required this.scan,
+    required this.onTap,
+    required this.colors,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -551,20 +541,19 @@ class _ScanItem extends StatelessWidget {
           vertical: AppSpacing.md,
         ),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.borderLight),
+          border: Border.all(color: colors.border),
         ),
         child: Row(
           children: [
             // Thumbnail
-            // TODO: Replace with actual image from Supabase Storage
-            // Use: Image.network(scan.imageUrl) when Supabase is connected
+            // TODO: Replace with Image.network(scan.imageUrl) when Supabase is connected
             Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.bgForDisease(scan.disease),
+                color: colors.bgForDisease(scan.disease),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: scan.imagePath != null
@@ -574,44 +563,32 @@ class _ScanItem extends StatelessWidget {
                     )
                   : Icon(
                       Icons.eco_outlined,
-                      color: AppColors.forDisease(scan.disease),
+                      color: colors.forDisease(scan.disease),
                       size: 24,
                     ),
             ),
-
             const SizedBox(width: AppSpacing.md),
-
-            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     scan.disease.replaceAll('_', ' '),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${scan.imageSource} · ${scan.date}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
                   ),
                 ],
               ),
             ),
-
-            // Chevron
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.borderLight,
-              size: 20,
-            ),
+            Icon(Icons.chevron_right, color: colors.chevron, size: 20),
           ],
         ),
       ),
