@@ -1,3 +1,5 @@
+// constants.dart
+
 import 'package:flutter/material.dart';
 
 // ============================================================
@@ -23,7 +25,7 @@ class AppColors {
   Color get textPrimary  => isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
   Color get textSecondary => const Color(0xFF989898);
   Color get border       => isDark ? const Color(0xFF414141) : const Color(0xFF949494);
-  Color get chevron      => const Color(0xFF6B6B6B);  
+  Color get chevron      => const Color(0xFF6B6B6B);
   Color get bacterial => isDark ? const Color(0xFFDD5D38) : const Color(0xFFA63C1D);
   Color get healthy   => isDark ? const Color(0xFF3EB489) : const Color(0xFF3B6D11);
   Color get primaryDark => isDark ? const Color(0xFF3EB489) : const Color(0xFF0F6E56);

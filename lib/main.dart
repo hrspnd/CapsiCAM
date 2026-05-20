@@ -70,7 +70,9 @@ final _router = GoRouter(
 
   // TODO: Change to AppRoutes.login when auth is ready
   
-  initialLocation: AppRoutes.dashboard,
+  // CHANGE INITIAL SCREEN LOCATION
+
+  initialLocation: AppRoutes.login,
   routes: [
     GoRoute(
       path: AppRoutes.login,
