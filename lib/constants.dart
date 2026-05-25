@@ -19,39 +19,52 @@ class AppColors {
 
   // ── Theme-aware colors ────────────────────────────────────
 
-  Color get background   => isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F3);
-  Color get surface      => isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
-  Color get surfaceGray  => isDark ? const Color(0xFF1A1A1A) : const Color(0xFFEFEFEF);
-  Color get textPrimary  => isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
+  Color get background =>
+      isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F3); 
+  Color get surface =>
+      isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
+  Color get surfaceGray =>
+      isDark ? const Color(0xFF1A1A1A) : const Color(0xFFEFEFEF);
+  Color get border =>
+      isDark ? const Color(0xFF414141) : const Color(0xFF949494);
+  Color get chevron => const Color(0xFF6B6B6B);
+  Color get bacterial =>
+      isDark ? const Color(0xFFDD5D38) : const Color(0xFFA63C1D);
+  Color get healthy =>
+      isDark ? const Color(0xFF3EB489) : const Color(0xFF3B6D11);
+  Color get primaryDark =>
+      isDark ? const Color(0xFF3EB489) : const Color(0xFF0F6E56);
+
+  // ── text ───────────────────────────────
+  Color get textPrimary =>
+      isDark ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
   Color get textSecondary => const Color(0xFF989898);
-  Color get border       => isDark ? const Color(0xFF414141) : const Color(0xFF949494);
-  Color get chevron      => const Color(0xFF6B6B6B);
-  Color get bacterial => isDark ? const Color(0xFFDD5D38) : const Color(0xFFA63C1D);
-  Color get healthy   => isDark ? const Color(0xFF3EB489) : const Color(0xFF3B6D11);
-  Color get primaryDark => isDark ? const Color(0xFF3EB489) : const Color(0xFF0F6E56);
+  Color get textGray => const Color(0xFF5C5C5C);
+  Color get textGreen =>
+      isDark ? const Color(0xFFFFFFFF) : const Color(0xFF185743);
 
   // ── Always the same in both modes ────────────────────────
 
   // Primary green
-  Color get primary         => const Color(0xFF2C9585);
-  Color get primaryDarker   => const Color(0xFF085041);
-  Color get primaryLight    => const Color(0xFF5DCAA5);
+  Color get primary => const Color(0xFF2C9585);
+  Color get primaryDarker => const Color(0xFF085041);
+  Color get primaryLight => const Color(0xFF5DCAA5);
   Color get primaryLightest => const Color(0xFFE1F5EE);
 
   // Disease
-  Color get bacterialBg  => const Color(0xFFFAECE7);
-  Color get cercospora   => const Color(0xFFBA7517);
+  Color get bacterialBg => const Color(0xFFFAECE7);
+  Color get cercospora => const Color(0xFFBA7517);
   Color get cercosporaBg => const Color(0xFFFAEEDA);
-  Color get healthyBg    => const Color(0xFFEAF3DE);
+  Color get healthyBg => const Color(0xFFEAF3DE);
 
   // Confidence
-  Color get confHigh     => const Color(0xFF3B6D11);
-  Color get confGood     => const Color(0xFF185FA5);
+  Color get confHigh => const Color(0xFF3B6D11);
+  Color get confGood => const Color(0xFF185FA5);
   Color get confModerate => const Color(0xFFBA7517);
-  Color get confLow      => const Color(0xFF993C1D);
+  Color get confLow => const Color(0xFF993C1D);
 
   // Danger
-  Color get danger   => const Color(0xFF993C1D);
+  Color get danger => const Color(0xFF993C1D);
   Color get dangerBg => const Color(0xFFFCEBEB);
 
   // White always
@@ -95,19 +108,20 @@ class AppColors {
 // ============================================================
 
 class AppSpacing {
-  static const double xs  = 4.0;
-  static const double sm  = 8.0;
-  static const double md  = 12.0;
-  static const double lg  = 16.0;
-  static const double xl  = 20.0;
+  static const double xs = 4.0;
+  static const double sm = 8.0;
+  static const double md = 12.0;
+  static const double lg = 16.0;
+  static const double xl = 20.0;
   static const double xxl = 24.0;
 }
 
 class AppRadius {
-  static const double sm   = 8.0;
-  static const double md   = 12.0;
-  static const double lg   = 14.0;
-  static const double xl   = 20.0;
+  static const double sm = 8.0;
+  static const double md = 12.0;
+  static const double lg = 14.0;
+  static const double xl = 20.0;
+  static const double xxl = 30.0;
   static const double full = 999.0;
 }
 
@@ -116,12 +130,12 @@ class AppRadius {
 // ============================================================
 
 class AppAssets {
-  static const String liveCameraIcon   = 'assets/icons/live-camera.png';
+  static const String liveCameraIcon = 'assets/icons/live-camera.png';
   static const String captureImageIcon = 'assets/icons/capture-image.png';
-  static const String historyIcon      = 'assets/icons/history.png';
-  static const String hatAvatar        = 'assets/icons/hat.png';
-  static const String tfliteModel      = 'assets/kita_mobilenet.tflite';
-  static const String labels           = 'assets/labels.txt';
+  static const String historyIcon = 'assets/icons/history.png';
+  static const String hatAvatar = 'assets/icons/hat.png';
+  static const String tfliteModel = 'assets/kita_mobilenet.tflite';
+  static const String labels = 'assets/labels.txt';
 }
 
 // ============================================================
@@ -129,15 +143,15 @@ class AppAssets {
 // ============================================================
 
 class AppRoutes {
-  static const String login        = '/login';
-  static const String signup       = '/signup';
-  static const String dashboard    = '/dashboard';
-  static const String liveScan     = '/live-scan';
+  static const String login = '/login';
+  static const String signup = '/signup';
+  static const String dashboard = '/dashboard';
+  static const String liveScan = '/live-scan';
   static const String captureImage = '/capture-image';
-  static const String scanResults  = '/scan-results';
-  static const String scanHistory  = '/scan-history';
-  static const String account      = '/account';
-  static const String myAccount    = '/my-account';
+  static const String scanResults = '/scan-results';
+  static const String scanHistory = '/scan-history';
+  static const String account = '/account';
+  static const String myAccount = '/my-account';
 }
 
 // ============================================================
@@ -145,8 +159,8 @@ class AppRoutes {
 // ============================================================
 
 class AppConstants {
-  static const int    inputSize            = 224;
-  static const double confidenceThreshold  = 0.70;
+  static const int inputSize = 224;
+  static const double confidenceThreshold = 0.70;
 
   static const List<String> classNames = [
     'Bacterial_Leaf_Spot',
@@ -154,7 +168,7 @@ class AppConstants {
     'Healthy',
   ];
 
-  static const String sourceScanned  = 'Scanned';
+  static const String sourceScanned = 'Scanned';
   static const String sourceUploaded = 'Uploaded';
 }
 

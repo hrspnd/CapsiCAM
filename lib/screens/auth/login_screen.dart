@@ -1,6 +1,7 @@
 // login_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants.dart';
 
@@ -100,14 +101,17 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        Padding(
+          padding: const EdgeInsets.only(left: 14),
+          child: Text(
           'Log In',
           style: TextStyle(
-            fontSize: 32,
+            fontSize: 40,
             fontWeight: FontWeight.w700,
             fontFamily: 'Onest',
             color: colors.textPrimary,
           ),
+        ),
         ),
         const SizedBox(height: AppSpacing.xl),
         Container(
@@ -115,12 +119,12 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.all(AppSpacing.xl),
           decoration: BoxDecoration(
             color: colors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: colors.border),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 12,
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 22,
+                spreadRadius: -2,
                 offset: const Offset(0, 4),
               ),
             ],
@@ -129,11 +133,11 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildEmailField(colors),
-              const SizedBox(height: AppSpacing.lg),
-              _buildPasswordField(colors),
               const SizedBox(height: AppSpacing.xl),
+              _buildPasswordField(colors),
+              const SizedBox(height: AppSpacing.xxl),
               _buildLoginButton(colors),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.lg),
               _buildSignUpRow(colors),
               const SizedBox(height: AppSpacing.lg),
               _buildDivider(colors),
@@ -155,9 +159,9 @@ class _LoginScreenState extends State<LoginScreen> {
         Text(
           'Email Address',
           style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: colors.textPrimary,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: colors.primaryDarker,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -165,8 +169,8 @@ class _LoginScreenState extends State<LoginScreen> {
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
-          style: TextStyle(fontSize: 14, color: colors.textPrimary),
-          decoration: _inputDecoration(colors, hint: 'johndoe123@gmail.com'),
+          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+          decoration: _inputDecoration(colors, hint: 'Enter your email'),
         ),
       ],
     );
@@ -184,9 +188,9 @@ class _LoginScreenState extends State<LoginScreen> {
             Text(
               'Password',
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: colors.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: colors.primaryDarker,
               ),
             ),
             GestureDetector(
@@ -195,9 +199,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 'Forgot Password?',
                 style: TextStyle(
                   fontSize: 12,
-                  color: colors.primaryDark,
+                  fontWeight: FontWeight.w300,
+                  color: colors.primaryDarker,
                   decoration: TextDecoration.underline,
-                  decorationColor: colors.primaryDark,
+                  decorationThickness: 1.7,
+                  decorationColor: colors.primaryDarker,
                 ),
               ),
             ),
@@ -209,8 +215,8 @@ class _LoginScreenState extends State<LoginScreen> {
           obscureText: _obscurePassword,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _onLogin(),
-          style: TextStyle(fontSize: 14, color: colors.textPrimary),
-          decoration: _inputDecoration(colors, hint: '••••••••••').copyWith(
+          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+          decoration: _inputDecoration(colors, hint: 'Enter your password').copyWith(
             suffixIcon: GestureDetector(
               onTap: () => setState(() => _obscurePassword = !_obscurePassword),
               child: Icon(
@@ -238,10 +244,10 @@ class _LoginScreenState extends State<LoginScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: colors.primaryDark,
           foregroundColor: colors.textWhite,
-          disabledBackgroundColor: colors.primaryDark.withOpacity(0.6),
+          disabledBackgroundColor: colors.primaryDark.withValues(alpha: 0.6),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
         ),
         child: _isLoading
@@ -256,8 +262,8 @@ class _LoginScreenState extends State<LoginScreen> {
             : Text(
                 'Log In',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
                   color: colors.textWhite,
                 ),
               ),
@@ -271,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Center(
       child: RichText(
         text: TextSpan(
-          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+          style: TextStyle(fontSize: 13, color: colors.textSecondary, fontFamily: 'Onest'),
           children: [
             const TextSpan(text: "Don't have an account? "),
             WidgetSpan(
@@ -305,9 +311,10 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Text(
             'or',
-            style: TextStyle(fontSize: 13, color: colors.textSecondary),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary, fontFamily: 'Onest'),
           ),
-        ),
+          ),
+
         Expanded(child: Divider(color: colors.border, thickness: 1)),
       ],
     );
@@ -327,19 +334,22 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: colors.surface,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Google 'G' logo — drawn with colored arcs, no external package needed
-            _GoogleLogo(size: 20),
+            Image.asset(
+              'assets/icons/google.png',
+              width: 24,
+              height: 24,
+            ),
             const SizedBox(width: AppSpacing.md),
             Text(
               'Log In with Google',
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: colors.textPrimary,
               ),
@@ -390,103 +400,22 @@ class _BottomWaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.lineTo(0, size.height - 40);
+
+    path.lineTo(0, size.height - 30);
     path.quadraticBezierTo(
-      size.width * 0.25, size.height,
-      size.width * 0.5,  size.height - 20,
+      size.width * 0.15, size.height - 90,
+      size.width * 0.52,  size.height - 22,
     );
-    path.quadraticBezierTo(
-      size.width * 0.75, size.height - 40,
-      size.width,        size.height - 10,
+    path.cubicTo(
+      size.width * 0.60, size.height - 8,  
+      size.width * 0.82, size.height + 20,  
+      size.width,        size.height - 26,  
     );
     path.lineTo(size.width, 0);
     path.close();
     return path;
   }
-
+ 
   @override
   bool shouldReclip(_BottomWaveClipper old) => false;
-}
-
-// ============================================================
-// GOOGLE LOGO — four-color 'G', no external packages
-// ============================================================
-
-class _GoogleLogo extends StatelessWidget {
-  final double size;
-  const _GoogleLogo({required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _GoogleLogoPainter(),
-    );
-  }
-}
-
-class _GoogleLogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double cx = size.width / 2;
-    final double cy = size.height / 2;
-    final double r  = size.width / 2;
-
-    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
-
-    // Blue arc (top-right, going clockwise)
-    canvas.drawArc(
-      rect, -1.57, 1.57, false,
-      Paint()
-        ..color  = const Color(0xFF4285F4)
-        ..style  = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.22
-        ..strokeCap = StrokeCap.butt,
-    );
-
-    // Red arc (top-left)
-    canvas.drawArc(
-      rect, -3.14, 1.57, false,
-      Paint()
-        ..color  = const Color(0xFFEA4335)
-        ..style  = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.22
-        ..strokeCap = StrokeCap.butt,
-    );
-
-    // Yellow arc (bottom-left)
-    canvas.drawArc(
-      rect, 1.57, 0.8, false,
-      Paint()
-        ..color  = const Color(0xFFFBBC05)
-        ..style  = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.22
-        ..strokeCap = StrokeCap.butt,
-    );
-
-    // Green arc (bottom-right)
-    canvas.drawArc(
-      rect, 2.37, 0.78, false,
-      Paint()
-        ..color  = const Color(0xFF34A853)
-        ..style  = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.22
-        ..strokeCap = StrokeCap.butt,
-    );
-
-    // White horizontal bar for the 'G' cut-out
-    final barPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = size.height * 0.22
-      ..strokeCap = StrokeCap.square;
-
-    canvas.drawLine(
-      Offset(cx, cy),
-      Offset(cx + r, cy),
-      barPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_GoogleLogoPainter old) => false;
 }
