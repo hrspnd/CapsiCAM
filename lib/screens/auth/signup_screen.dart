@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../constants.dart';
 
 // ============================================================
-// SIGNUP SCREEN
+// SIGN UP SCREEN
 // ============================================================
 
 class SignupScreen extends StatefulWidget {
@@ -20,9 +20,19 @@ class _SignupScreenState extends State<SignupScreen> {
   final _displayNameController     = TextEditingController();
   final _passwordController        = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword            = true;
-  bool _obscureConfirmPassword     = true;
-  bool _isLoading                  = false;
+
+  bool _obscurePassword        = true;
+  bool _obscureConfirmPassword = true;
+  bool _isLoading              = false;
+
+  // ── Error state ───────────────────────────────────────────
+  String? _displayNameError;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
+
+  static const int _minDisplayNameLength = 2;
+  static const int _minPasswordLength    = 8;
 
   @override
   void dispose() {
@@ -33,25 +43,170 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
+  // ── Validation ────────────────────────────────────────────
+
+  bool _validate() {
+    final displayName     = _displayNameController.text.trim();
+    final email           = _emailController.text.trim();
+    final password        = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    String? displayNameErr;
+    String? emailErr;
+    String? passwordErr;
+    String? confirmPasswordErr;
+
+    // Display name
+    if (displayName.isEmpty) {
+      displayNameErr = 'Please enter your display name.';
+    } else if (displayName.length < _minDisplayNameLength) {
+      displayNameErr =
+          'Display name must be at least $_minDisplayNameLength characters.';
+    }
+
+    // Email
+    if (email.isEmpty) {
+      emailErr = 'Please enter your email address.';
+    } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+      emailErr = 'Please enter a valid email address.';
+    }
+
+    // Password
+    if (password.isEmpty) {
+      passwordErr = 'Please enter your password.';
+    } else if (password.length < _minPasswordLength) {
+      passwordErr = 'Password must be at least $_minPasswordLength characters.';
+    }
+
+    // Confirm password
+    if (confirmPassword.isEmpty) {
+      confirmPasswordErr = 'Please confirm your password.';
+    } else if (password.isNotEmpty && confirmPassword != password) {
+      confirmPasswordErr = 'Passwords do not match.';
+    }
+
+    setState(() {
+      _displayNameError     = displayNameErr;
+      _emailError           = emailErr;
+      _passwordError        = passwordErr;
+      _confirmPasswordError = confirmPasswordErr;
+    });
+
+    return displayNameErr == null &&
+        emailErr == null &&
+        passwordErr == null &&
+        confirmPasswordErr == null;
+  }
+
   // ── Actions ───────────────────────────────────────────────
 
   Future<void> _onSignUp() async {
-    // TODO: Validate fields
-    // TODO: Call Supabase auth → supabase_service.dart → signUpWithEmail()
-    // TODO: On success → context.go(AppRoutes.dashboard)
-    // TODO: On error   → show SnackBar with error message
+    if (!_validate()) return;
+
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1)); // placeholder
-    setState(() => _isLoading = false);
+    try {
+      // TODO: Call Supabase auth → supabase_service.dart → signUpWithEmail()
+      // TODO: On success → show success banner, then context.go(AppRoutes.login)
+      await Future.delayed(const Duration(seconds: 1)); // placeholder
+
+      if (!mounted) return;
+      _showSuccessBanner();
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      context.go(AppRoutes.login);
+    } on Exception catch (e) {
+      _handleSupabaseError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
-  void _onGoogleSignUp() {
-    // TODO: Call Supabase Google OAuth → supabase_service.dart → signInWithGoogle()
-    // TODO: On success → context.go(AppRoutes.dashboard)
+  void _showSuccessBanner() {
+    final colors = AppColors.of(context);
+    ScaffoldMessenger.of(context).showMaterialBanner(
+      MaterialBanner(
+        backgroundColor: colors.primaryLightest,
+        leading: Icon(Icons.check_circle_outline, color: colors.primaryDark),
+        content: Text(
+          'Account created! Please check your email to verify your account.',
+          style: TextStyle(
+            fontSize: 13,
+            color: colors.primaryDarker,
+            fontFamily: 'Onest',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
+            child: Text(
+              'OK',
+              style: TextStyle(
+                color: colors.primaryDark,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Onest',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleSupabaseError(String message) {
+    String? emailErr;
+    String? passwordErr;
+
+    if (message.contains('already registered') ||
+        message.contains('already exists') ||
+        message.contains('User already registered') ||
+        message.contains('email_exists')) {
+      emailErr =
+          'An account with this email already exists. Try logging in instead.';
+    } else if (message.contains('weak_password') ||
+        message.contains('Password should be') ||
+        message.contains('password is too weak')) {
+      passwordErr =
+          'Password is too weak. Please choose a stronger password.';
+    } else if (message.contains('network') ||
+        message.contains('SocketException') ||
+        message.contains('connection')) {
+      passwordErr = 'No internet connection. Please check your network.';
+    } else {
+      passwordErr = 'Something went wrong. Please try again.';
+    }
+
+    setState(() {
+      _emailError    = emailErr;
+      _passwordError = passwordErr;
+    });
+  }
+
+  Future<void> _onGoogleSignUp() async {
+    try {
+      // TODO: Call Supabase Google OAuth → supabase_service.dart → signUpWithGoogle()
+      // TODO: On success → show success banner, then context.go(AppRoutes.login)
+    } on Exception catch (e) {
+      final msg = e.toString();
+      if (msg.contains('cancelled') || msg.contains('canceled')) return; // silent
+      setState(() {
+        if (msg.contains('network') || msg.contains('SocketException')) {
+          _passwordError =
+              'No internet connection. Please check your network.';
+        } else if (msg.contains('already registered') ||
+            msg.contains('already exists') ||
+            msg.contains('email_exists')) {
+          _passwordError =
+              'An account already exists with this Google account. Try logging in instead.';
+        } else {
+          _passwordError = 'Something went wrong. Please try again.';
+        }
+      });
+    }
   }
 
   void _onLogin() {
-    context.pop();
+    context.go(AppRoutes.login);
   }
 
   // ── Build ─────────────────────────────────────────────────
@@ -81,15 +236,19 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  // ── Wave header ───────────────────────────────────────────
+  // ── Wave header (horizontally flipped) ───────────────────
 
   Widget _buildWaveHeader(AppColors colors) {
-    return ClipPath(
-      clipper: _TopWaveClipper(),
-      child: Container(
-        height: 160,
-        width: double.infinity,
-        color: colors.primary,
+    return Transform(
+      alignment: Alignment.center,
+      transform: Matrix4.identity()..scale(-1.0, 1.0, 1.0),
+      child: ClipPath(
+        clipper: _BottomWaveClipper(),
+        child: Container(
+          height: 150,
+          width: double.infinity,
+          color: colors.primary,
+        ),
       ),
     );
   }
@@ -98,10 +257,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Widget _buildCard(AppColors colors) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 14),
+          padding: const EdgeInsets.only(right: 14),
           child: Text(
             'Sign Up',
             style: TextStyle(
@@ -132,11 +291,11 @@ class _SignupScreenState extends State<SignupScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildEmailField(colors),
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
               _buildDisplayNameField(colors),
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
               _buildPasswordField(colors),
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
               _buildConfirmPasswordField(colors),
               const SizedBox(height: AppSpacing.xxl),
               _buildSignUpButton(colors),
@@ -173,8 +332,29 @@ class _SignupScreenState extends State<SignupScreen> {
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           style: TextStyle(fontSize: 13, color: colors.textPrimary),
-          decoration: _inputDecoration(colors, hint: 'Enter your email'),
+          onChanged: (_) {
+            if (_emailError != null) setState(() => _emailError = null);
+          },
+          decoration: _inputDecoration(
+            colors,
+            hint: 'Enter your email',
+            errorText: _emailError,
+          ),
         ),
+        if (_emailError != null) ...[
+          const SizedBox(height: 1),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.xs),
+            child: Text(
+              _emailError!,
+              style: TextStyle(
+                fontSize: 12,
+                color: colors.danger,
+                fontFamily: 'Onest',
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -198,9 +378,33 @@ class _SignupScreenState extends State<SignupScreen> {
           controller: _displayNameController,
           keyboardType: TextInputType.name,
           textInputAction: TextInputAction.next,
+          textCapitalization: TextCapitalization.words,
           style: TextStyle(fontSize: 13, color: colors.textPrimary),
-          decoration: _inputDecoration(colors, hint: 'Enter your display name'),
+          onChanged: (_) {
+            if (_displayNameError != null) {
+              setState(() => _displayNameError = null);
+            }
+          },
+          decoration: _inputDecoration(
+            colors,
+            hint: 'Enter your display name',
+            errorText: _displayNameError,
+          ),
         ),
+        if (_displayNameError != null) ...[
+          const SizedBox(height: 1),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.xs),
+            child: Text(
+              _displayNameError!,
+              style: TextStyle(
+                fontSize: 12,
+                color: colors.danger,
+                fontFamily: 'Onest',
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -225,9 +429,17 @@ class _SignupScreenState extends State<SignupScreen> {
           obscureText: _obscurePassword,
           textInputAction: TextInputAction.next,
           style: TextStyle(fontSize: 13, color: colors.textPrimary),
-          decoration: _inputDecoration(colors, hint: 'Enter your password').copyWith(
+          onChanged: (_) {
+            if (_passwordError != null) setState(() => _passwordError = null);
+          },
+          decoration: _inputDecoration(
+            colors,
+            hint: 'Enter your password',
+            errorText: _passwordError,
+          ).copyWith(
             suffixIcon: GestureDetector(
-              onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+              onTap: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
               child: Icon(
                 _obscurePassword
                     ? Icons.visibility_outlined
@@ -238,6 +450,20 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ),
         ),
+        if (_passwordError != null) ...[
+          const SizedBox(height: 1),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.xs),
+            child: Text(
+              _passwordError!,
+              style: TextStyle(
+                fontSize: 12,
+                color: colors.danger,
+                fontFamily: 'Onest',
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -263,7 +489,16 @@ class _SignupScreenState extends State<SignupScreen> {
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _onSignUp(),
           style: TextStyle(fontSize: 13, color: colors.textPrimary),
-          decoration: _inputDecoration(colors, hint: 'Re-enter your password').copyWith(
+          onChanged: (_) {
+            if (_confirmPasswordError != null) {
+              setState(() => _confirmPasswordError = null);
+            }
+          },
+          decoration: _inputDecoration(
+            colors,
+            hint: 'Confirm your password',
+            errorText: _confirmPasswordError,
+          ).copyWith(
             suffixIcon: GestureDetector(
               onTap: () => setState(
                   () => _obscureConfirmPassword = !_obscureConfirmPassword),
@@ -277,6 +512,20 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ),
         ),
+        if (_confirmPasswordError != null) ...[
+          const SizedBox(height: 1),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.xs),
+            child: Text(
+              _confirmPasswordError!,
+              style: TextStyle(
+                fontSize: 12,
+                color: colors.danger,
+                fontFamily: 'Onest',
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -292,7 +541,8 @@ class _SignupScreenState extends State<SignupScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: colors.primaryDark,
           foregroundColor: colors.textWhite,
-          disabledBackgroundColor: colors.primaryDark.withValues(alpha: 0.6),
+          disabledBackgroundColor:
+              colors.primaryDark.withValues(alpha: 0.6),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -417,10 +667,17 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // ── Shared input decoration ───────────────────────────────
 
-  InputDecoration _inputDecoration(AppColors colors, {required String hint}) {
+  InputDecoration _inputDecoration(
+    AppColors colors, {
+    required String hint,
+    String? errorText,
+  }) {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(fontSize: 14, color: colors.textSecondary),
+      errorText: errorText != null ? '' : null,
+      errorStyle: const TextStyle(fontSize: 0, height: 0),
+      errorMaxLines: 1,
       filled: true,
       fillColor: colors.surface,
       contentPadding: const EdgeInsets.symmetric(
@@ -448,27 +705,28 @@ class _SignupScreenState extends State<SignupScreen> {
 }
 
 // ============================================================
-// WAVE CLIPPER — horizontally flipped from login
-// Mirror rule: every control x → (size.width - original_x)
-// Path is redrawn right-to-left so the shape is a true mirror
+// WAVE CLIPPER  (same path as LoginScreen — flipped via Transform)
 // ============================================================
 
-class _TopWaveClipper extends CustomClipper<Path> {
+class _BottomWaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    // Start at left edge — same Y as login's right edge
-    path.lineTo(0, size.height - 26);
-    // Cubic — mirrors login's cubic (c1/c2/end x values flipped)
-    path.cubicTo(
-      size.width * 0.18, size.height + 20, // mirror of 0.82
-      size.width * 0.40, size.height - 8,  // mirror of 0.60
-      size.width * 0.48, size.height - 22, // mirror of 0.52 midpoint
-    );
-    // Quad — mirrors login's quadratic (control/end x values flipped)
+
+    path.lineTo(0, size.height - 30);
     path.quadraticBezierTo(
-      size.width * 0.85, size.height - 90, // mirror of 0.15
-      size.width,        size.height - 30, // mirror of left edge start
+      size.width * 0.15,
+      size.height - 90,
+      size.width * 0.52,
+      size.height - 22,
+    );
+    path.cubicTo(
+      size.width * 0.60,
+      size.height - 8,
+      size.width * 0.82,
+      size.height + 20,
+      size.width,
+      size.height - 26,
     );
     path.lineTo(size.width, 0);
     path.close();
@@ -476,5 +734,5 @@ class _TopWaveClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(_TopWaveClipper old) => false;
+  bool shouldReclip(_BottomWaveClipper old) => false;
 }

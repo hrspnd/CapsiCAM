@@ -1,7 +1,6 @@
 // login_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants.dart';
 
@@ -22,6 +21,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword     = true;
   bool _isLoading           = false;
 
+  // ── Error state ───────────────────────────────────────────
+  String? _emailError;
+  String? _passwordError;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -29,16 +32,78 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // ── Validation ────────────────────────────────────────────
+
+  bool _validate() {
+    final email    = _emailController.text.trim();
+    final password = _passwordController.text;
+    String? emailErr;
+    String? passwordErr;
+
+    if (email.isEmpty) {
+      emailErr = 'Please enter your email address.';
+    } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+      emailErr = 'Please enter a valid email address.';
+    }
+
+    if (password.isEmpty) {
+      passwordErr = 'Please enter your password.';
+    }
+
+    setState(() {
+      _emailError    = emailErr;
+      _passwordError = passwordErr;
+    });
+
+    return emailErr == null && passwordErr == null;
+  }
+
   // ── Actions ───────────────────────────────────────────────
 
   Future<void> _onLogin() async {
-    // TODO: Validate fields
-    // TODO: Call Supabase auth → supabase_service.dart → signInWithEmail()
-    // TODO: On success → context.go(AppRoutes.dashboard)
-    // TODO: On error   → show SnackBar with error message
+    if (!_validate()) return;
+
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1)); // placeholder
-    setState(() => _isLoading = false);
+    try {
+      // TODO: Call Supabase auth → supabase_service.dart → signInWithEmail()
+      // TODO: On success → context.go(AppRoutes.dashboard)
+      await Future.delayed(const Duration(seconds: 1)); // placeholder
+      
+    } on Exception catch (e) {
+      _handleSupabaseError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _handleSupabaseError(String message) {
+    String? emailErr;
+    String? passwordErr;
+
+    if (message.contains('Invalid login credentials') ||
+        message.contains('invalid_credentials')) {
+      passwordErr = 'Incorrect password. Please try again.';
+    } else if (message.contains('user not found') ||
+        message.contains('User not found')) {
+      emailErr = 'No account found with this email.';
+    } else if (message.contains('email not confirmed') ||
+        message.contains('Email not confirmed')) {
+      emailErr = 'Please verify your email before logging in.';
+    } else if (message.contains('too many requests') ||
+        message.contains('over_email_send_rate_limit')) {
+      passwordErr = 'Too many login attempts. Please try again later.';
+    } else if (message.contains('network') ||
+        message.contains('SocketException') ||
+        message.contains('connection')) {
+      passwordErr = 'No internet connection. Please check your network.';
+    } else {
+      passwordErr = 'Something went wrong. Please try again.';
+    }
+
+    setState(() {
+      _emailError    = emailErr;
+      _passwordError = passwordErr;
+    });
   }
 
   void _onForgotPassword() {
@@ -46,9 +111,23 @@ class _LoginScreenState extends State<LoginScreen> {
     // or show a bottom sheet / dialog
   }
 
-  void _onGoogleSignIn() {
-    // TODO: Call Supabase Google OAuth → supabase_service.dart → signInWithGoogle()
-    // TODO: On success → context.go(AppRoutes.dashboard)
+  Future<void> _onGoogleSignIn() async {
+    try {
+      // TODO: Call Supabase Google OAuth → supabase_service.dart → signInWithGoogle()
+      // TODO: On success → context.go(AppRoutes.dashboard)
+    } on Exception catch (e) {
+      final msg = e.toString();
+      if (msg.contains('cancelled') || msg.contains('canceled')) return; // silent
+      setState(() {
+        if (msg.contains('network') || msg.contains('SocketException')) {
+          _passwordError = 'No internet connection. Please check your network.';
+        } else if (msg.contains('not found') || msg.contains('no account')) {
+          _passwordError = 'No account linked to this Google account.';
+        } else {
+          _passwordError = 'Something went wrong. Please try again.';
+        }
+      });
+    }
   }
 
   void _onSignUp() {
@@ -88,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return ClipPath(
       clipper: _BottomWaveClipper(),
       child: Container(
-        height: 160,
+        height: 150,
         width: double.infinity,
         color: colors.primary,
       ),
@@ -169,9 +248,20 @@ class _LoginScreenState extends State<LoginScreen> {
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
-          style: TextStyle(fontSize: 13, color: colors.textSecondary),
-          decoration: _inputDecoration(colors, hint: 'Enter your email'),
+          style: TextStyle(fontSize: 13, color: colors.textPrimary),
+          onChanged: (_) { if (_emailError != null) setState(() => _emailError = null); },
+          decoration: _inputDecoration(colors, hint: 'Enter your email', errorText: _emailError),
         ),
+        if (_emailError != null) ...[
+          const SizedBox(height: 1),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.xs), 
+            child: Text(
+              _emailError!,
+              style: TextStyle(fontSize: 12, color: colors.danger, fontFamily: 'Onest'),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -215,8 +305,9 @@ class _LoginScreenState extends State<LoginScreen> {
           obscureText: _obscurePassword,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _onLogin(),
-          style: TextStyle(fontSize: 13, color: colors.textSecondary),
-          decoration: _inputDecoration(colors, hint: 'Enter your password').copyWith(
+          style: TextStyle(fontSize: 13, color: colors.textPrimary),
+          onChanged: (_) { if (_passwordError != null) setState(() => _passwordError = null); },
+          decoration: _inputDecoration(colors, hint: 'Enter your password', errorText: _passwordError).copyWith(
             suffixIcon: GestureDetector(
               onTap: () => setState(() => _obscurePassword = !_obscurePassword),
               child: Icon(
@@ -229,6 +320,16 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+        if (_passwordError != null) ...[
+          const SizedBox(height: 1),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.xs),
+            child: Text(
+              _passwordError!,
+              style: TextStyle(fontSize: 12, color: colors.danger, fontFamily: 'Onest'),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -362,10 +463,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ── Shared input decoration ───────────────────────────────
 
-  InputDecoration _inputDecoration(AppColors colors, {required String hint}) {
+  InputDecoration _inputDecoration(AppColors colors, {required String hint, String? errorText}) {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(fontSize: 14, color: colors.textSecondary),
+      errorText: errorText != null ? '' : null,
+      errorStyle: const TextStyle(fontSize: 0, height: 0),
+      errorMaxLines: 1,
       filled: true,
       fillColor: colors.surface,
       contentPadding: const EdgeInsets.symmetric(
