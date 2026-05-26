@@ -3,28 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../constants.dart';
-
-// ============================================================
-// SCAN RESULT MODEL — move to lib/models/scan_result.dart later
-// ============================================================
-
-class ScanResult {
-  final String id;
-  final String disease;
-  final String imageSource;
-  final String date;
-  final double confidence;
-  final String? imagePath;
-
-  const ScanResult({
-    required this.id,
-    required this.disease,
-    required this.imageSource,
-    required this.date,
-    required this.confidence,
-    this.imagePath,
-  });
-}
+import 'package:thesis_app/models/scan_result.dart';
 
 // ============================================================
 // DASHBOARD SCREEN
@@ -151,7 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 'Welcome Back,',
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.white.withOpacity(0.75),
+                  color: Colors.white.withValues(alpha: 0.75),
                   height: 0.3,
                 ),
               ),
@@ -302,7 +281,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: _recentScans
                     .map(
                       (scan) => Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
                         child: _ScanItem(
                           scan: scan,
                           colors: colors,
@@ -426,7 +405,7 @@ class _ActionButton extends StatelessWidget {
           border: Border.all(color: colors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),

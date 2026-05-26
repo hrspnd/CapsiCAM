@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'constants.dart';
 import 'theme_provider.dart';
@@ -8,6 +9,8 @@ import 'screens/auth/signup_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/scan_history_screen.dart';
 import 'screens/account/account_screen.dart';
+import 'screens/account/myaccount_screen.dart';
+import 'screens/live_scan_screen.dart';
 
 // ============================================================
 // SUPABASE INIT — uncomment and add credentials when ready
@@ -28,37 +31,20 @@ import 'screens/account/account_screen.dart';
 
 void main() {
   runApp(
-    // ThemeProvider wraps the entire app so any screen can access it
-    // Access in any widget: context.read<ThemeProvider>() or
-    // watch changes: context.watch<ThemeProvider>()
-    _AppWithTheme(),
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const _AppWithTheme(),
+    ),
   );
 }
 
-// Simple theme wrapper without extra packages
-class _AppWithTheme extends StatefulWidget {
-  @override
-  State<_AppWithTheme> createState() => _AppWithThemeState();
-}
-
-class _AppWithThemeState extends State<_AppWithTheme> {
-  final ThemeProvider _themeProvider = ThemeProvider();
-
-  @override
-  void initState() {
-    super.initState();
-    _themeProvider.addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _themeProvider.dispose();
-    super.dispose();
-  }
+class _AppWithTheme extends StatelessWidget {
+  const _AppWithTheme();
 
   @override
   Widget build(BuildContext context) {
-    return ThesisApp(themeProvider: _themeProvider);
+    final themeProvider = context.watch<ThemeProvider>();
+    return ThesisApp(themeProvider: themeProvider);
   }
 }
 
@@ -67,12 +53,12 @@ class _AppWithThemeState extends State<_AppWithTheme> {
 // ============================================================
 
 final _router = GoRouter(
-
   // TODO: Change to AppRoutes.login when auth is ready
-  
-  // CHANGE INITIAL SCREEN LOCATION
 
-  initialLocation: AppRoutes.login,
+  // CHANGE INITIAL SCREEN LOCATION
+  // initialLocation: AppRoutes.liveScan, // JOSIE
+  initialLocation: AppRoutes.account, // YAM
+
   routes: [
     GoRoute(
       path: AppRoutes.login,
@@ -94,12 +80,16 @@ final _router = GoRouter(
       path: AppRoutes.account,
       builder: (context, state) => const AccountScreen(),
     ),
+    GoRoute(
+      path: AppRoutes.myAccount,
+      builder: (context, state) => const MyAccountScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.liveScan,
+      builder: (context, state) => const LiveScanScreen(),
+    ),
 
     // TODO: Uncomment as screens are built
-    // GoRoute(
-    //   path: AppRoutes.liveScan,
-    //   builder: (context, state) => const LiveScanScreen(),
-    // ),
     // GoRoute(
     //   path: AppRoutes.captureImage,
     //   builder: (context, state) => const CaptureImageScreen(),
@@ -110,10 +100,6 @@ final _router = GoRouter(
     //     final extra = state.extra as Map<String, dynamic>;
     //     return ScanResultsScreen(scanData: extra);
     //   },
-    // ),
-    // GoRoute(
-    //   path: AppRoutes.myAccount,
-    //   builder: (context, state) => const MyAccountScreen(),
     // ),
   ],
 );
@@ -134,7 +120,7 @@ class ThesisApp extends StatelessWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeProvider.themeMode,
-      routerConfig: _router,  
+      routerConfig: _router,
     );
   }
 }

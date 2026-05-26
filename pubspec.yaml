@@ -58,6 +58,9 @@ dependencies:
   # SVG Icons
   flutter_svg: ^2.0.0
 
+  # Theme Provider
+  provider: ^6.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

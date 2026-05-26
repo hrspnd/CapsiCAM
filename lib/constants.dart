@@ -20,7 +20,7 @@ class AppColors {
   // ── Theme-aware colors ────────────────────────────────────
 
   Color get background =>
-      isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F3); 
+      isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F3);
   Color get surface =>
       isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
   Color get surfaceGray =>
@@ -69,6 +69,11 @@ class AppColors {
 
   // White always
   Color get textWhite => const Color(0xFFFFFFFF);
+
+  // Black always
+  Color get textBlack => const Color(0xFF000000);
+
+  Color get about => const Color(0xFFF1EFE8);
 
   // ── Helper methods ────────────────────────────────────────
 
@@ -130,12 +135,21 @@ class AppRadius {
 // ============================================================
 
 class AppAssets {
+  static const String googleIcon = 'assets/icons/google.png';
   static const String liveCameraIcon = 'assets/icons/live-camera.png';
   static const String captureImageIcon = 'assets/icons/capture-image.png';
   static const String historyIcon = 'assets/icons/history.png';
   static const String hatAvatar = 'assets/icons/hat.png';
   static const String tfliteModel = 'assets/kita_mobilenet.tflite';
   static const String labels = 'assets/labels.txt';
+  static const String accountIcon = 'assets/icons/account.png';
+  static const String homeIcon = 'assets/icons/home.png';
+  static const String displayMode = 'assets/icons/display-mode.png';
+  static const String languageIcon = 'assets/icons/language.png';
+  static const String helpIcon = 'assets/icons/help.png';
+  static const String aboutIcon = 'assets/icons/about.png';
+  static const String trashIcon = 'assets/icons/trash.png';
+  static const String backIcon = 'assets/icons/back.png';
 }
 
 // ============================================================

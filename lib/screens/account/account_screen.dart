@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants.dart';
 import '../../theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -19,18 +20,15 @@ class _AccountScreenState extends State<AccountScreen> {
   // final String _userName = user?.userMetadata?['display_name'] ?? '';
   // final String _userEmail = user?.email ?? '';
 
-  final String _userName  = 'John Doe';
+  final String _userName = 'John Doe';
   final String _userEmail = 'johndoe123@gmail.com';
 
   // ── Theme ─────────────────────────────────────────────────
-  // Access ThemeProvider — wired through _AppWithThemeState
-  // For now we read current theme from context
   String _currentThemeLabel(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    // TODO: Read from ThemeProvider when wired up
-    // return themeProvider.themeMode == ThemeMode.dark ? 'Dark' :
-    //        themeProvider.themeMode == ThemeMode.system ? 'System' : 'Light';
-    return brightness == Brightness.dark ? 'Dark' : 'Light';
+    final mode = context.watch<ThemeProvider>().themeMode;
+    if (mode == ThemeMode.dark) return 'Dark';
+    if (mode == ThemeMode.system) return 'System';
+    return 'Light';
   }
 
   // ── Language ──────────────────────────────────────────────
@@ -55,15 +53,16 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   // ── Bottom sheets ─────────────────────────────────────────
-
   void _showDisplayModeSheet(AppColors colors) {
-    // TODO: Get current mode from ThemeProvider
-    // final themeProvider = context.read<ThemeProvider>();
-    // String selected = themeProvider.themeMode == ThemeMode.dark ? 'Dark' :
-    //                   themeProvider.themeMode == ThemeMode.system ? 'System' : 'Light';
-
-    String selected = _currentThemeLabel(context);
-    final options  = ['Light', 'Dark', 'System'];
+    final provider = Provider.of<ThemeProvider>(context, listen: false);
+    String selected;
+    if (provider.themeMode == ThemeMode.dark)
+      selected = 'Dark';
+    else if (provider.themeMode == ThemeMode.system)
+      selected = 'System';
+    else
+      selected = 'Light';
+    final options = ['Light', 'Dark', 'System'];
 
     showModalBottomSheet(
       context: context,
@@ -74,94 +73,101 @@ class _AccountScreenState extends State<AccountScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Handle bar
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-                      decoration: BoxDecoration(
-                        color: colors.border,
-                        borderRadius: BorderRadius.circular(AppRadius.full),
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.xxl,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Handle bar
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: colors.border,
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
                       ),
                     ),
-                  ),
-                  Text(
-                    'Display Mode',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
+                    Text(
+                      'Display Mode',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  ...options.map((option) {
-                    final isSelected = selected == option;
-                    return GestureDetector(
-                      onTap: () {
-                        setSheetState(() => selected = option);
-                        setState(() {});
+                    const SizedBox(height: AppSpacing.md),
+                    ...options.map((option) {
+                      final isSelected = selected == option;
+                      return GestureDetector(
+                        onTap: () {
+                          setSheetState(() => selected = option);
+                          setState(() {});
 
-                        // TODO: Apply theme via ThemeProvider
-                        // if (option == 'Dark') themeProvider.setDark();
-                        // else if (option == 'System') themeProvider.setSystem();
-                        // else themeProvider.setLight();
+                          if (option == 'Dark')
+                            provider.setDark();
+                          else if (option == 'System')
+                            provider.setSystem();
+                          else
+                            provider.setLight();
 
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                          vertical: AppSpacing.md,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? colors.primaryLightest
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.md,
+                          ),
+                          decoration: BoxDecoration(
                             color: isSelected
-                                ? colors.primaryDark
-                                : colors.border,
+                                ? colors.primaryLightest
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(
+                              color: isSelected
+                                  ? colors.primaryDark
+                                  : colors.border,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                option,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                  color: isSelected
+                                      ? colors.primaryDark
+                                      : colors.textPrimary,
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check_rounded,
+                                  color: colors.primaryDark,
+                                  size: 18,
+                                ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              option,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                                color: isSelected
-                                    ? colors.primaryDark
-                                    : colors.textPrimary,
-                              ),
-                            ),
-                            if (isSelected)
-                              Icon(
-                                Icons.check_rounded,
-                                color: colors.primaryDark,
-                                size: 18,
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                ],
+                      );
+                    }),
+                  ],
+                ),
               ),
             );
           },
@@ -171,8 +177,8 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   void _showLanguageSheet(AppColors colors) {
-    String selected   = _currentLanguage;
-    final options     = ['English', 'Filipino'];
+    String selected = _currentLanguage;
+    final options = ['English', 'Filipino'];
 
     showModalBottomSheet(
       context: context,
@@ -185,7 +191,10 @@ class _AccountScreenState extends State<AccountScreen> {
           builder: (context, setSheetState) {
             return Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.xxl,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -293,7 +302,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ),
         content: Text(
-          'Kita is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0',
+          '____ is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0',
           style: TextStyle(
             fontSize: 13,
             color: colors.textSecondary,
@@ -303,10 +312,7 @@ class _AccountScreenState extends State<AccountScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Close',
-              style: TextStyle(color: colors.primary),
-            ),
+            child: Text('Close', style: TextStyle(color: colors.primary)),
           ),
         ],
       ),
@@ -340,10 +346,7 @@ class _AccountScreenState extends State<AccountScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Close',
-              style: TextStyle(color: colors.primary),
-            ),
+            child: Text('Close', style: TextStyle(color: colors.primary)),
           ),
         ],
       ),
@@ -368,10 +371,7 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
         content: Text(
           'Are you sure you want to log out?',
-          style: TextStyle(
-            fontSize: 13,
-            color: colors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 13, color: colors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -423,14 +423,14 @@ class _AccountScreenState extends State<AccountScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   _buildSettingsGroup([
                     _SettingsRow(
-                      iconPath: 'assets/icons/display-mode.png',
+                      iconPath: AppAssets.displayMode,
                       label: 'Display Mode',
                       value: _currentThemeLabel(context),
                       colors: colors,
                       onTap: () => _showDisplayModeSheet(colors),
                     ),
                     _SettingsRow(
-                      iconPath: 'assets/icons/language.png',
+                      iconPath: AppAssets.languageIcon,
                       label: 'Language',
                       value: _currentLanguage,
                       colors: colors,
@@ -442,16 +442,20 @@ class _AccountScreenState extends State<AccountScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   _buildSettingsGroup([
                     _SettingsRow(
-                      iconPath: 'assets/icons/about.png',
+                      iconPath: AppAssets.aboutIcon,
                       label: 'About',
                       colors: colors,
                       onTap: () => _showAboutDialog(colors),
+                      iconBgColor: colors.about,
+                      iconColor: colors.textGray,
                     ),
                     _SettingsRow(
-                      iconPath: 'assets/icons/help.png',
+                      iconPath: AppAssets.helpIcon,
                       label: 'Help & Support',
                       colors: colors,
                       onTap: () => _showHelpDialog(colors),
+                      iconBgColor: colors.about,
+                      iconColor: colors.textGray,
                     ),
                   ], colors),
                   const SizedBox(height: AppSpacing.xxl),
@@ -496,17 +500,17 @@ class _AccountScreenState extends State<AccountScreen> {
     return Container(
       color: colors.primary,
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + AppSpacing.lg,
+        top: MediaQuery.of(context).padding.top + 32,
         left: AppSpacing.lg,
         right: AppSpacing.lg,
-        bottom: AppSpacing.lg,
+        bottom: AppSpacing.xxl,
       ),
       child: Row(
         children: [
           Text(
             'Account',
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 32,
               fontWeight: FontWeight.w600,
               color: Colors.white,
             ),
@@ -562,10 +566,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
                 Text(
                   _userEmail,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
               ],
             ),
@@ -624,8 +625,7 @@ class _AccountScreenState extends State<AccountScreen> {
           return Column(
             children: [
               entry.value,
-              if (!isLast)
-                Divider(height: 1, color: colors.border),
+              if (!isLast) Divider(height: 1, color: colors.border),
             ],
           );
         }).toList(),
@@ -651,14 +651,14 @@ class _AccountScreenState extends State<AccountScreen> {
             onTap: () => _onNavTap(0),
           ),
           _NavItem(
-            icon: Icons.grid_view_rounded,
+            iconPath: AppAssets.homeIcon,
             label: 'Home',
             isActive: _currentNavIndex == 1,
             onTap: () => _onNavTap(1),
             iconSize: 22,
           ),
           _NavItem(
-            icon: Icons.person_outline_rounded,
+            iconPath: AppAssets.accountIcon,
             label: 'Account',
             isActive: _currentNavIndex == 2,
             onTap: () => _onNavTap(2),
@@ -680,6 +680,8 @@ class _SettingsRow extends StatelessWidget {
   final String? value;
   final AppColors colors;
   final VoidCallback onTap;
+  final Color? iconBgColor;
+  final Color? iconColor;
 
   const _SettingsRow({
     required this.iconPath,
@@ -687,6 +689,8 @@ class _SettingsRow extends StatelessWidget {
     required this.colors,
     required this.onTap,
     this.value,
+    this.iconBgColor,
+    this.iconColor,
   });
 
   @override
@@ -706,19 +710,16 @@ class _SettingsRow extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: colors.primaryLightest,
+                color: iconBgColor ?? colors.primaryLightest,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(8),
                 child: Image.asset(
                   iconPath,
-                  color: colors.primaryDark,
-                  errorBuilder: (_, __, ___) => Icon(
-                    Icons.settings,
-                    size: 18,
-                    color: colors.primaryDark,
-                  ),
+                  color: iconColor ?? colors.primaryDark,
+                  errorBuilder: (_, __, ___) =>
+                      Icon(Icons.settings, size: 18, color: colors.primaryDark),
                 ),
               ),
             ),
@@ -727,27 +728,17 @@ class _SettingsRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colors.textPrimary,
-                ),
+                style: TextStyle(fontSize: 14, color: colors.textPrimary),
               ),
             ),
             // Value + chevron
             if (value != null)
               Text(
                 value!,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 13, color: colors.textSecondary),
               ),
             const SizedBox(width: AppSpacing.xs),
-            Icon(
-              Icons.chevron_right,
-              color: colors.chevron,
-              size: 18,
-            ),
+            Icon(Icons.chevron_right, color: colors.chevron, size: 18),
           ],
         ),
       ),
