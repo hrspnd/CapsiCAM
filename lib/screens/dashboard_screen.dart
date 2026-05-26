@@ -376,14 +376,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onTap: () => _onNavTap(0),
           ),
           _NavItem(
-            icon: Icons.grid_view_rounded,
+            iconPath: AppAssets.homeIcon,
             label: 'Home',
             isActive: _currentNavIndex == 1,
             onTap: () => _onNavTap(1),
             iconSize: 22,
           ),
           _NavItem(
-            icon: Icons.person_outline_rounded,
+            iconPath: AppAssets.accountIcon,
             label: 'Account',
             isActive: _currentNavIndex == 2,
             onTap: () => _onNavTap(2),
