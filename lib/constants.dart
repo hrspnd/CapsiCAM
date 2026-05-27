@@ -155,6 +155,10 @@ class AppAssets {
   static const String aboutIcon = 'assets/icons/about.png';
   static const String trashIcon = 'assets/icons/trash.png';
   static const String backIcon = 'assets/icons/back.png';
+  static const String nameIcon = 'assets/icons/account.png';
+  static const String changePassword = 'assets/icons/change-password.png';
+  static const String dateCreated = 'assets/icons/date.png';
+  static const String editIcon = 'assets/icons/pencil.png';
 }
 
 // ============================================================

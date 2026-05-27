@@ -57,7 +57,7 @@ final _router = GoRouter(
 
   // CHANGE INITIAL SCREEN LOCATION
   // initialLocation: AppRoutes.liveScan, // JOSIE
-  initialLocation: AppRoutes.account, // YAM
+  initialLocation: AppRoutes.myAccount, // YAM
 
   routes: [
     GoRoute(
