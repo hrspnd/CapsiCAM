@@ -65,10 +65,11 @@ class AppColors {
   Color get healthyBg => const Color(0xFFEAF3DE);
 
   // Confidence
-  Color get confHigh => const Color(0xFF3B6D11);
-  Color get confGood => const Color(0xFF185FA5);
-  Color get confModerate => const Color(0xFFBA7517);
-  Color get confLow => const Color(0xFF993C1D);
+  Color get confHigh => const Color(0xFF90BD54);
+  Color get confGood => const Color(0xFF4A93D5);
+  Color get confModerate => const Color(0xFFE39A2D);
+  Color get confLow => const Color(0xFFA63C1D);
+  Color get confidenceBar => const Color(0xFFE2E2E2);
 
   // Danger
   Color get danger => const Color(0xFFDD5D38);
@@ -159,6 +160,10 @@ class AppAssets {
   static const String changePassword = 'assets/icons/change-password.png';
   static const String dateCreated = 'assets/icons/date.png';
   static const String editIcon = 'assets/icons/pencil.png';
+  static const String noImage = 'assets/icons/no-image.png';
+  static const String cameraIcon= 'assets/icons/camera.png';
+  static const String uploadIcon = 'assets/icons/upload.png';
+  static const String leafBullet = 'assets/icons/scan-bullet.png';
 }
 
 // ============================================================

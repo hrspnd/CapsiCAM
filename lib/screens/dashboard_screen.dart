@@ -75,7 +75,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
     // Get theme-aware colors — pass context so it knows light/dark
     final colors = AppColors.of(context);
 
@@ -182,7 +181,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             iconPath: AppAssets.liveCameraIcon,
             colors: colors,
             onTap: () {
-              // TODO: context.push(AppRoutes.liveScan);
+              context.push(AppRoutes.liveScan);
             },
           ),
         ),
@@ -194,7 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             iconPath: AppAssets.captureImageIcon,
             colors: colors,
             onTap: () {
-              // TODO: context.push(AppRoutes.captureImage);
+              context.push(AppRoutes.captureImage);
             },
           ),
         ),

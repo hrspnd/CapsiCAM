@@ -11,6 +11,8 @@ import 'screens/scan_history_screen.dart';
 import 'screens/account/account_screen.dart';
 import 'screens/account/myaccount_screen.dart';
 import 'screens/live_scan_screen.dart';
+import 'screens/capture_image_screen.dart';
+import 'screens/scan_results_screen.dart';
 
 // ============================================================
 // SUPABASE INIT — uncomment and add credentials when ready
@@ -56,9 +58,8 @@ final _router = GoRouter(
   // TODO: Change to AppRoutes.login when auth is ready
 
   // CHANGE INITIAL SCREEN LOCATION
-  // initialLocation: AppRoutes.liveScan, // JOSIE
-  initialLocation: AppRoutes.myAccount, // YAM
-
+  initialLocation: AppRoutes.account, // JOSIE
+  // initialLocation: AppRoutes.myAccount, // YAM
   routes: [
     GoRoute(
       path: AppRoutes.login,
@@ -88,12 +89,10 @@ final _router = GoRouter(
       path: AppRoutes.liveScan,
       builder: (context, state) => const LiveScanScreen(),
     ),
-
-    // TODO: Uncomment as screens are built
-    // GoRoute(
-    //   path: AppRoutes.captureImage,
-    //   builder: (context, state) => const CaptureImageScreen(),
-    // ),
+    GoRoute(
+      path: AppRoutes.captureImage,
+      builder: (context, state) => const CaptureImageScreen(),
+    ),
     // GoRoute(
     //   path: AppRoutes.scanResults,
     //   builder: (context, state) {
@@ -101,6 +100,13 @@ final _router = GoRouter(
     //     return ScanResultsScreen(scanData: extra);
     //   },
     // ),
+    GoRoute(
+      path: AppRoutes.scanResults,
+      builder: (context, state) {
+        final args = state.extra as ScanResultsArgs;
+        return ScanResultsScreen(args: args);
+      },
+    ),
   ],
 );
 

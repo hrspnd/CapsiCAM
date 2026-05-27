@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../../constants.dart';
+import 'package:go_router/go_router.dart';
 
 class MyAccountScreen extends StatefulWidget {
   const MyAccountScreen({super.key});
@@ -19,6 +20,10 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   // final String _dateCreated = user?.createdAt != null
   //     ? DateFormat('MMM d, yyyy').format(DateTime.parse(user!.createdAt))
   //     : '';
+
+  void _onBack() {
+    context.pop();
+  }  
 
   final String _userName = 'John Doe';
   final String _userEmail = 'johndoe123@gmail.com';
@@ -436,6 +441,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // const SizedBox(height: AppSpacing.lg),
                   // ── Avatar ───────────────────────────────────
                   Center(
                     child: Stack(
@@ -476,8 +482,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                               decoration: BoxDecoration(
                                 color: colors.primaryDark,
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                    color: colors.surface, width: 2),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.all(5),
@@ -497,7 +501,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                   // ── Name & email ─────────────────────────────
                   Center(
                     child: Column(
@@ -505,12 +509,11 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                         Text(
                           _userName,
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 25,
                             fontWeight: FontWeight.w600,
                             color: colors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 2),
                         Text(
                           _userEmail,
                           style: TextStyle(
@@ -572,38 +575,37 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   }
 
   // ── Header ────────────────────────────────────────────────
+
   Widget _buildHeader(AppColors colors) {
     return Container(
       color: colors.primary,
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + AppSpacing.lg,
+        top: MediaQuery.of(context).padding.top + 32,
         left: AppSpacing.lg,
         right: AppSpacing.lg,
-        bottom: AppSpacing.lg,
+        bottom: AppSpacing.xxl,
       ),
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Image.asset(
-              AppAssets.backIcon,
-              width: 22,
-              height: 22,
-              color: Colors.white,
-              errorBuilder: (_, __, ___) => const Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 22,
+            onTap: _onBack,
+            child: Padding(
+              padding: EdgeInsets.only(right: AppSpacing.sm),
+              child: Image.asset(
+                AppAssets.backIcon,
+                width: 20,
+                height: 20,
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
-          const Text(
+          const SizedBox(width: AppSpacing.sm),
+          Text(
             'My Account',
             style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Onest',
+              color: colors.textWhite,
             ),
           ),
         ],
