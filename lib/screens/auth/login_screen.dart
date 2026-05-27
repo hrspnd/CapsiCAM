@@ -167,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return ClipPath(
       clipper: _BottomWaveClipper(),
       child: Container(
-        height: 150,
+        height: 155,
         width: double.infinity,
         color: colors.primary,
       ),
@@ -240,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: colors.primaryDarker,
+            color: colors.textGreen,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -280,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: colors.primaryDarker,
+                color: colors.textGreen,
               ),
             ),
             GestureDetector(
@@ -290,10 +290,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w300,
-                  color: colors.primaryDarker,
+                  color: colors.textGreen,
                   decoration: TextDecoration.underline,
                   decorationThickness: 1.7,
-                  decorationColor: colors.primaryDarker,
+                  decorationColor: colors.textGreen,
                 ),
               ),
             ),
@@ -343,7 +343,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _onLogin,
         style: ElevatedButton.styleFrom(
-          backgroundColor: colors.primaryDark,
+          backgroundColor: colors.buttonBg,
           foregroundColor: colors.textWhite,
           disabledBackgroundColor: colors.primaryDark.withValues(alpha: 0.6),
           elevation: 0,

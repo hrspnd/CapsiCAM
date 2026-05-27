@@ -323,7 +323,7 @@ class _SignupScreenState extends State<SignupScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: colors.primaryDarker,
+            color: colors.textGreen,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -370,7 +370,7 @@ class _SignupScreenState extends State<SignupScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: colors.primaryDarker,
+            color: colors.textGreen,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -420,7 +420,7 @@ class _SignupScreenState extends State<SignupScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: colors.primaryDarker,
+            color: colors.textGreen,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -479,7 +479,7 @@ class _SignupScreenState extends State<SignupScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: colors.primaryDarker,
+            color: colors.textGreen,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -539,7 +539,7 @@ class _SignupScreenState extends State<SignupScreen> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _onSignUp,
         style: ElevatedButton.styleFrom(
-          backgroundColor: colors.primaryDark,
+          backgroundColor: colors.buttonBg,
           foregroundColor: colors.textWhite,
           disabledBackgroundColor:
               colors.primaryDark.withValues(alpha: 0.6),

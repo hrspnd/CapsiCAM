@@ -428,6 +428,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       value: _currentThemeLabel(context),
                       colors: colors,
                       onTap: () => _showDisplayModeSheet(colors),
+                      iconColor: colors.appSettingsIcon,
                     ),
                     _SettingsRow(
                       iconPath: AppAssets.languageIcon,
@@ -435,6 +436,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       value: _currentLanguage,
                       colors: colors,
                       onTap: () => _showLanguageSheet(colors),
+                      iconColor: colors.appSettingsIcon,
                     ),
                   ], colors),
                   const SizedBox(height: AppSpacing.lg),

@@ -34,6 +34,12 @@ class AppColors {
       isDark ? const Color(0xFF3EB489) : const Color(0xFF3B6D11);
   Color get primaryDark =>
       isDark ? const Color(0xFF3EB489) : const Color(0xFF0F6E56);
+  Color get primaryLightest =>
+      isDark ? const Color(0xFFC2FFEA) : const Color(0xFFE1F5EE);
+  Color get about => isDark ? const Color(0xFFDFDCD2) : const Color(0xFFF1EFE8);
+  Color get liveConfidenceBg =>
+      isDark ? const Color(0x801A1A1A) : const Color(0xFFF5F5F0);
+  Color get buttonBg => isDark ? const Color(0xFF2C9585) : const Color(0xFF0F6E56);
 
   // ── text ───────────────────────────────
   Color get textPrimary =>
@@ -42,6 +48,8 @@ class AppColors {
   Color get textGray => const Color(0xFF5C5C5C);
   Color get textGreen =>
       isDark ? const Color(0xFFFFFFFF) : const Color(0xFF185743);
+  Color get appSettingsIcon =>
+      isDark ? const Color(0xFF0F6E56) : const Color(0xFF3EB489);
 
   // ── Always the same in both modes ────────────────────────
 
@@ -49,7 +57,6 @@ class AppColors {
   Color get primary => const Color(0xFF2C9585);
   Color get primaryDarker => const Color(0xFF085041);
   Color get primaryLight => const Color(0xFF5DCAA5);
-  Color get primaryLightest => const Color(0xFFE1F5EE);
 
   // Disease
   Color get bacterialBg => const Color(0xFFFAECE7);
@@ -64,7 +71,7 @@ class AppColors {
   Color get confLow => const Color(0xFF993C1D);
 
   // Danger
-  Color get danger => const Color(0xFF993C1D);
+  Color get danger => const Color(0xFFDD5D38);
   Color get dangerBg => const Color(0xFFFCEBEB);
 
   // White always
@@ -72,8 +79,6 @@ class AppColors {
 
   // Black always
   Color get textBlack => const Color(0xFF000000);
-
-  Color get about => const Color(0xFFF1EFE8);
 
   // ── Helper methods ────────────────────────────────────────
 

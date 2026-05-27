@@ -48,7 +48,7 @@ class _LiveScanScreenState extends State<LiveScanScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // _initCamera(); // temporary disable_cam - UNCOMMENT PAG GAGAMITIN CAMERA
+    _initCamera(); // temporary disable_cam - UNCOMMENT PAG GAGAMITIN CAMERA
     _simulateDetection(); //temporary (PARA MAKITA YUNG LIVE SCAN N LIVE CONFIDENCE) -- delete after
   }
 
@@ -178,32 +178,32 @@ class _LiveScanScreenState extends State<LiveScanScreen>
     return Container(
       color: colors.primary,
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + AppSpacing.md,
-        left: AppSpacing.sm,
+        top: MediaQuery.of(context).padding.top + 32,
+        left: AppSpacing.lg,
         right: AppSpacing.lg,
-        bottom: AppSpacing.lg,
+        bottom: AppSpacing.xxl,
       ),
       child: Row(
         children: [
           GestureDetector(
             onTap: _onBack,
-            child: const Padding(
-              padding: EdgeInsets.all(AppSpacing.sm),
-              child: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
-                size: 20,
+            child: Padding(
+              padding: EdgeInsets.only(right: AppSpacing.sm),
+              child: Image.asset(
+                AppAssets.backIcon,
+                width: 20,
+                height: 20,
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.xs),
-          const Text(
+          const SizedBox(width: AppSpacing.sm),
+          Text(
             'Live Scan',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 32,
               fontWeight: FontWeight.w700,
               fontFamily: 'Onest',
-              color: Colors.white,
+              color: colors.textWhite,
             ),
           ),
         ],
@@ -246,13 +246,13 @@ class _LiveScanScreenState extends State<LiveScanScreen>
 
             // Torch toggle
             Positioned(
-              bottom: AppSpacing.lg,
-              right: AppSpacing.lg,
+              bottom: AppSpacing.md,
+              right: AppSpacing.md,
               child: GestureDetector(
                 onTap: _onToggleTorch,
                 child: Container(
-                  width: 44,
-                  height: 44,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.45),
                     shape: BoxShape.circle,
@@ -350,7 +350,7 @@ class _LiveScanScreenState extends State<LiveScanScreen>
         child: ElevatedButton(
           onPressed: _onCapture,
           style: ElevatedButton.styleFrom(
-            backgroundColor: colors.primaryDark,
+            backgroundColor: colors.buttonBg,
             foregroundColor: colors.textWhite,
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -361,7 +361,7 @@ class _LiveScanScreenState extends State<LiveScanScreen>
             'Capture',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               fontFamily: 'Onest',
               color: colors.textWhite,
             ),
@@ -427,7 +427,7 @@ class _FixedScanOverlay extends StatelessWidget {
           vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: colors.bacterialBg,
+          color: colors.liveConfidenceBg,
           borderRadius: BorderRadius.circular(AppRadius.sm),
           // boxShadow: [
           //   BoxShadow(
@@ -458,7 +458,7 @@ class _FixedScanOverlay extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontFamily: 'Onest',
-                color: colors.textBlack.withValues(alpha: 0.8),
+                color: colors.textPrimary,
               ),
             ),
           ],
