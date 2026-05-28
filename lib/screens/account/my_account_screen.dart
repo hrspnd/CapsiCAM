@@ -31,12 +31,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
 
   // ── Edit profile photo sheet ───────────────────────────────
   void _showEditProfilePhotoSheet(AppColors colors) {
-    // TODO: Replace placeholder grid with actual avatar icons and color options
-    // Icons: 16 custom avatar icons from assets
-    // Colors: 28 gradient/solid color options
-    // On select: update user avatar in Supabase Storage
-    // await Supabase.instance.client.storage.from('avatars').upload(...)
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -46,14 +40,13 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       ),
       builder: (context) {
         return DraggableScrollableSheet(
-          initialChildSize: 0.75,
+          initialChildSize: 0.85,
           minChildSize: 0.5,
           maxChildSize: 0.95,
           expand: false,
           builder: (context, scrollController) {
             return Column(
               children: [
-                // Header
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.lg,
@@ -63,7 +56,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Handle bar
                       Center(
                         child: Container(
                           width: 36,
@@ -71,8 +63,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                           margin: const EdgeInsets.only(bottom: AppSpacing.lg),
                           decoration: BoxDecoration(
                             color: colors.border,
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.full),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
                           ),
                         ),
                       ),
@@ -99,7 +90,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              // TODO: Save selected avatar to Supabase
                               Navigator.pop(context);
                             },
                             child: Text(
@@ -117,7 +107,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     ],
                   ),
                 ),
-                // Scrollable content
                 Expanded(
                   child: SingleChildScrollView(
                     controller: scrollController,
@@ -125,9 +114,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Custom icons grid ──────────────────
-                        // TODO: Replace with real icon assets when available
-                        // 16 icons total, 4 per row
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -139,12 +125,8 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                           ),
                           itemCount: 16,
                           itemBuilder: (context, index) {
-                            // TODO: Replace with actual avatar icon assets
-                            // e.g. Image.asset(AppAssets.avatarIcons[index])
                             return GestureDetector(
-                              onTap: () {
-                                // TODO: Set selected icon
-                              },
+                              onTap: () {},
                               child: Container(
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
@@ -188,16 +170,11 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                             );
                           },
                         ),
-
-                        // ── Divider between icons and colors ───
                         Padding(
                           padding: const EdgeInsets.symmetric(
                               vertical: AppSpacing.lg),
                           child: Divider(color: colors.border),
                         ),
-
-                        // ── Color options grid ─────────────────
-                        // 28 colors total, 4 per row
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -209,7 +186,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                           ),
                           itemCount: 28,
                           itemBuilder: (context, index) {
-                            // TODO: Replace with actual color/gradient options
                             final placeholderColors = [
                               const Color(0xFFFFE082),
                               const Color(0xFFFFCC80),
@@ -240,12 +216,10 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                               const Color(0xFF607D8B),
                               const Color(0xFF795548),
                             ];
-                            final color = placeholderColors[
-                                index % placeholderColors.length];
+                            final color =
+                                placeholderColors[index % placeholderColors.length];
                             return GestureDetector(
-                              onTap: () {
-                                // TODO: Set selected background color
-                              },
+                              onTap: () {},
                               child: Container(
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
@@ -257,7 +231,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    // TODO: Replace with user initials
                                     'MJ',
                                     style: TextStyle(
                                       fontSize: 16,
@@ -285,143 +258,188 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
 
   // ── Edit name dialog ──────────────────────────────────────
   void _showEditNameDialog(AppColors colors) {
-    final controller = TextEditingController(text: _userName);
+  final controller = TextEditingController(text: _userName);
+  String? nameError;
+  bool isLoading = false;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        title: Text(
-          'Edit Name',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: colors.textPrimary,
+  showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) {
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.xxl,
           ),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: TextStyle(fontSize: 14, color: colors.textPrimary),
-          decoration: InputDecoration(
-            hintText: 'Enter your name',
-            hintStyle: TextStyle(color: colors.textSecondary),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: colors.border),
-            ),
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: colors.primary),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          title: Text(
+            'Edit Display Name',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Onest',
+              color: colors.textPrimary,
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: colors.textSecondary),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  style: TextStyle(fontSize: 14, color: colors.textPrimary),
+                  onChanged: (_) {
+                    if (nameError != null) {
+                      setDialogState(() => nameError = null);
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Display Name',
+                    labelStyle: TextStyle(
+                      fontSize: 13,
+                      color: colors.textSecondary,
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: nameError != null
+                            ? colors.danger
+                            : colors.border,
+                      ),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: nameError != null
+                            ? colors.danger
+                            : colors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                if (nameError != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    nameError!,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontFamily: 'Onest',
+                      color: colors.danger,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          TextButton(
-            onPressed: () {
-              // TODO: Update display name in Supabase
-              // await Supabase.instance.client.auth.updateUser(
-              //   UserAttributes(data: {'display_name': controller.text.trim()}),
-              // );
-              Navigator.pop(context);
-            },
-            child: Text(
-              'Save',
-              style: TextStyle(
-                color: colors.primary,
-                fontWeight: FontWeight.w600,
+          actions: [
+            TextButton(
+              onPressed: isLoading ? null : () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: colors.textSecondary),
               ),
+            ),
+            TextButton(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      final value = controller.text.trim();
+                      String? err;
+
+                      if (value.isEmpty) {
+                        err = 'Please enter your display name.';
+                      } else if (value.length < 2) {
+                        err = 'Display name must be at least 2 characters.';
+                      } else if (value.length > 32) {
+                        err = 'Display name must be under 32 characters.';
+                      }
+
+                      if (err != null) {
+                        setDialogState(() => nameError = err);
+                        return;
+                      }
+
+                      setDialogState(() => isLoading = true);
+                      try {
+                        // TODO: Update display name in Supabase
+                        // await Supabase.instance.client.auth.updateUser(
+                        //   UserAttributes(data: {'display_name': value}),
+                        // );
+                        await Future.delayed(const Duration(seconds: 1));
+
+                        if (!context.mounted) return;
+                        Navigator.of(context).pop();
+                        _showDisplayNameSuccessSnackbar(colors);
+                      } on Exception catch (e) {
+                        setDialogState(() {
+                          isLoading = false;
+                          nameError = 'Something went wrong. Please try again.';
+                        });
+                      }
+                    },
+              child: isLoading
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.primary,
+                      ),
+                    )
+                  : Text(
+                      'Save',
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Onest',
+                      ),
+                    ),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+void _showDisplayNameSuccessSnackbar(AppColors colors) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          Icon(Icons.check_circle_outline_rounded,
+              color: colors.textWhite, size: 18),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            'Display name updated successfully.',
+            style: TextStyle(
+              fontFamily: 'Onest',
+              color: colors.textWhite,
+              fontSize: 13,
             ),
           ),
         ],
       ),
-    );
-  }
+      backgroundColor: colors.primaryDark,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      margin: const EdgeInsets.all(AppSpacing.lg),
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
 
   // ── Change password dialog ────────────────────────────────
+  // Extracted to _ChangePasswordDialog StatefulWidget below
   void _showChangePasswordDialog(AppColors colors) {
-    final currentController = TextEditingController();
-    final newController = TextEditingController();
-    final confirmController = TextEditingController();
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-        title: Text(
-          'Change Password',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: colors.textPrimary,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _passwordField('Current Password', currentController, colors),
-            const SizedBox(height: AppSpacing.md),
-            _passwordField('New Password', newController, colors),
-            const SizedBox(height: AppSpacing.md),
-            _passwordField('Confirm New Password', confirmController, colors),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: colors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              // TODO: Validate and update password via Supabase
-              // await Supabase.instance.client.auth.updateUser(
-              //   UserAttributes(password: newController.text.trim()),
-              // );
-              Navigator.pop(context);
-            },
-            child: Text(
-              'Save',
-              style: TextStyle(
-                color: colors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _passwordField(
-      String label, TextEditingController controller, AppColors colors) {
-    return TextField(
-      controller: controller,
-      obscureText: true,
-      style: TextStyle(fontSize: 14, color: colors.textPrimary),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(fontSize: 13, color: colors.textSecondary),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: colors.border),
-        ),
-        focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: colors.primary),
-        ),
-      ),
+      builder: (context) => _ChangePasswordDialog(colors: colors),
     );
   }
 
@@ -441,8 +459,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // const SizedBox(height: AppSpacing.lg),
-                  // ── Avatar ───────────────────────────────────
                   Center(
                     child: Stack(
                       children: [
@@ -470,7 +486,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                             ),
                           ),
                         ),
-                        // Edit pencil badge
                         Positioned(
                           bottom: 2,
                           right: 2,
@@ -502,7 +517,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  // ── Name & email ─────────────────────────────
                   Center(
                     child: Column(
                       children: [
@@ -525,14 +539,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-
-                  // ── Edit Account group ───────────────────────
                   _buildSectionLabel('Edit Account', colors),
                   const SizedBox(height: AppSpacing.sm),
                   _buildSettingsGroup([
                     _SettingsRow(
                       iconPath: AppAssets.nameIcon,
-                      label: 'Name',
+                      label: 'Display Name',
                       value: _userName,
                       colors: colors,
                       iconBgColor: colors.primaryLightest,
@@ -549,8 +561,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     ),
                   ], colors),
                   const SizedBox(height: AppSpacing.lg),
-
-                  // ── Account Details group ────────────────────
                   _buildSectionLabel('Account Details', colors),
                   const SizedBox(height: AppSpacing.sm),
                   _buildSettingsGroup([
@@ -561,7 +571,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                       colors: colors,
                       iconBgColor: colors.about,
                       iconColor: colors.textGray,
-                      onTap: () {}, // not tappable
+                      onTap: () {},
                       tappable: false,
                     ),
                   ], colors),
@@ -613,7 +623,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     );
   }
 
-  // ── Section label ─────────────────────────────────────────
   Widget _buildSectionLabel(String label, AppColors colors) {
     return Text(
       label.toUpperCase(),
@@ -626,7 +635,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     );
   }
 
-  // ── Settings group ────────────────────────────────────────
   Widget _buildSettingsGroup(List<Widget> rows, AppColors colors) {
     return Container(
       decoration: BoxDecoration(
@@ -645,6 +653,288 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
           );
         }).toList(),
       ),
+    );
+  }
+}
+
+// ============================================================
+// CHANGE PASSWORD DIALOG
+// ============================================================
+
+class _ChangePasswordDialog extends StatefulWidget {
+  final AppColors colors;
+
+  const _ChangePasswordDialog({required this.colors});
+
+  @override
+  State<_ChangePasswordDialog> createState() => _ChangePasswordDialogState();
+}
+
+class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
+  final _currentController  = TextEditingController();
+  final _newController      = TextEditingController();
+  final _confirmController  = TextEditingController();
+  bool _isLoading           = false;
+
+  // ── Error state ───────────────────────────────────────────
+  String? _currentError;
+  String? _newError;
+  String? _confirmError;
+
+  @override
+  void dispose() {
+    _currentController.dispose();
+    _newController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  // ── Validation ────────────────────────────────────────────
+
+  bool _validate() {
+    final current = _currentController.text;
+    final newPass = _newController.text;
+    final confirm = _confirmController.text;
+
+    String? currentErr;
+    String? newErr;
+    String? confirmErr;
+
+    if (current.isEmpty) {
+      currentErr = 'Please enter your current password.';
+    }
+
+    if (newPass.isEmpty) {
+      newErr = 'Please enter a new password.';
+    } else if (newPass.length < 8) {
+      newErr = 'Password must be at least 8 characters.';
+    } else if (newPass == current && current.isNotEmpty) {
+      newErr = 'New password must be different from your current password.';
+    }
+
+    if (confirm.isEmpty) {
+      confirmErr = 'Please confirm your new password.';
+    } else if (newPass.isNotEmpty && confirm != newPass) {
+      confirmErr = 'Passwords do not match.';
+    }
+
+    setState(() {
+      _currentError = currentErr;
+      _newError     = newErr;
+      _confirmError = confirmErr;
+    });
+
+    return currentErr == null && newErr == null && confirmErr == null;
+  }
+
+  // ── Actions ───────────────────────────────────────────────
+
+  Future<void> _onSave() async {
+    if (!_validate()) return;
+
+    setState(() => _isLoading = true);
+    try {
+      // TODO: Call Supabase → supabase_service.dart → changePassword()
+      // await Supabase.instance.client.auth.updateUser(
+      //   UserAttributes(password: _newController.text),
+      // );
+      await Future.delayed(const Duration(seconds: 1)); // placeholder
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      _showSuccessSnackbar();
+    } on Exception catch (e) {
+      _handleSupabaseError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _handleSupabaseError(String message) {
+    String? currentErr;
+    String? newErr;
+
+    if (message.contains('Invalid login credentials') ||
+        message.contains('invalid_credentials') ||
+        message.contains('wrong password')) {
+      currentErr = 'Incorrect password. Please try again.';
+    } else if (message.contains('weak_password') ||
+        message.contains('Password should be')) {
+      newErr = 'Password is too weak. Please choose a stronger password.';
+    } else if (message.contains('network') ||
+        message.contains('SocketException') ||
+        message.contains('connection')) {
+      newErr = 'No internet connection. Please check your network.';
+    } else {
+      newErr = 'Something went wrong. Please try again.';
+    }
+
+    setState(() {
+      _currentError = currentErr;
+      _newError     = newErr;
+    });
+  }
+
+  void _showSuccessSnackbar() {
+    final colors = widget.colors;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle_outline_rounded,
+                color: colors.textWhite, size: 18),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              "Password changed! You're all set.",
+              style: TextStyle(
+                fontFamily: 'Onest',
+                color: colors.textWhite,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: colors.primaryDark,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        margin: const EdgeInsets.all(AppSpacing.lg),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // ── Build ─────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = widget.colors;
+
+    return AlertDialog(
+      backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      title: Text(
+        'Change Password',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Onest',
+          color: colors.textPrimary,
+        ),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildPasswordField(
+            label: 'Current Password',
+            controller: _currentController,
+            errorText: _currentError,
+            colors: colors,
+            onChanged: (_) {
+              if (_currentError != null) setState(() => _currentError = null);
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _buildPasswordField(
+            label: 'New Password',
+            controller: _newController,
+            errorText: _newError,
+            colors: colors,
+            onChanged: (_) {
+              if (_newError != null) setState(() => _newError = null);
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _buildPasswordField(
+            label: 'Confirm New Password',
+            controller: _confirmController,
+            errorText: _confirmError,
+            colors: colors,
+            onChanged: (_) {
+              if (_confirmError != null) setState(() => _confirmError = null);
+            },
+          ),
+        ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: Text(
+            'Cancel',
+            style: TextStyle(color: colors.textSecondary),
+          ),
+        ),
+        TextButton(
+          onPressed: _isLoading ? null : _onSave,
+          child: _isLoading
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: colors.primary,
+                  ),
+                )
+              : Text(
+                  'Save',
+                  style: TextStyle(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Onest',
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField({
+    required String label,
+    required TextEditingController controller,
+    required AppColors colors,
+    required ValueChanged<String> onChanged,
+    String? errorText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          obscureText: true,
+          onChanged: onChanged,
+          style: TextStyle(fontSize: 14, color: colors.textPrimary),
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: TextStyle(fontSize: 13, color: colors.textSecondary),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: errorText != null ? colors.danger : colors.border,
+              ),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: errorText != null ? colors.danger : colors.primary,
+              ),
+            ),
+          ),
+        ),
+        if (errorText != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            errorText,
+            style: TextStyle(
+              fontSize: 11,
+              fontFamily: 'Onest',
+              color: colors.danger,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -686,7 +976,6 @@ class _SettingsRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Icon
             Container(
               width: 32,
               height: 32,
@@ -708,21 +997,18 @@ class _SettingsRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.md),
-            // Label
             Expanded(
               child: Text(
                 label,
                 style: TextStyle(fontSize: 14, color: colors.textPrimary),
               ),
             ),
-            // Value
             if (value != null)
               Text(
                 value!,
-                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                style: TextStyle(fontSize: 13, color: colors.infoColor),
               ),
             const SizedBox(width: AppSpacing.xs),
-            // Chevron only if tappable
             if (tappable)
               Icon(Icons.chevron_right, color: colors.chevron, size: 18),
           ],

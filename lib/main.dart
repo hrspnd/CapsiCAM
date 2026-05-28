@@ -9,10 +9,11 @@ import 'screens/auth/signup_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/scan_history_screen.dart';
 import 'screens/account/account_screen.dart';
-import 'screens/account/myaccount_screen.dart';
+import 'screens/account/my_account_screen.dart';
 import 'screens/live_scan_screen.dart';
 import 'screens/capture_image_screen.dart';
 import 'screens/scan_results_screen.dart';
+import 'screens/history_result_screen.dart';
 
 // ============================================================
 // SUPABASE INIT — uncomment and add credentials when ready
@@ -58,7 +59,7 @@ final _router = GoRouter(
   // TODO: Change to AppRoutes.login when auth is ready
 
   // CHANGE INITIAL SCREEN LOCATION
-  initialLocation: AppRoutes.account, // JOSIE
+  initialLocation: AppRoutes.scanHistory, // JOSIE
   // initialLocation: AppRoutes.myAccount, // YAM
   routes: [
     GoRoute(
@@ -105,6 +106,13 @@ final _router = GoRouter(
       builder: (context, state) {
         final args = state.extra as ScanResultsArgs;
         return ScanResultsScreen(args: args);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.historyResult,
+      builder: (context, state) {
+        final args = state.extra as HistoryResultArgs;
+        return HistoryResultScreen(args: args);
       },
     ),
   ],

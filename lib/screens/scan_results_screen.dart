@@ -90,6 +90,8 @@ class ScanResultsScreen extends StatelessWidget {
       useSafeArea: true,
       builder: (_) => GestureDetector(
         onTap: () => context.pop(),
+        onVerticalDragStart: (_) => Navigator.of(context).pop(),
+        onHorizontalDragStart: (_) => Navigator.of(context).pop(),
         child: Scaffold(
           backgroundColor: colors.textBlack,
           body: Center(
@@ -110,9 +112,11 @@ class ScanResultsScreen extends StatelessWidget {
     if (args.heatmapPath == null) return;
     showDialog(
       context: context,
-      useSafeArea: false,
+      useSafeArea: true,
       builder: (_) => GestureDetector(
         onTap: () => context.pop(),
+        onVerticalDragStart: (_) => Navigator.of(context).pop(),
+        onHorizontalDragStart: (_) => Navigator.of(context).pop(),
         child: Scaffold(
           backgroundColor: colors.textBlack,
           body: Center(
@@ -295,61 +299,68 @@ class ScanResultsScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: _buildScanInfo(colors)),
+          Expanded(
+            flex: 48,
+            child: _buildScanInfo(colors),
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
-            child: GestureDetector(
-              onTap: () => _showFullHeatmap(context, colors),
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: colors.border),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'POINTS OF INTEREST',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Onest',
-                        letterSpacing: 0.5,
-                        color: colors.textPrimary,
+            flex: 52,
+            child: Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: colors.border),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'POINTS OF INTEREST',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Onest',
+                      letterSpacing: 0.5,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  // GestureDetector wraps only the image
+                  GestureDetector(
+                    onTap: () => _showFullHeatmap(context, colors),
+                    child: FractionallySizedBox(
+                      widthFactor: 0.85,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        child: AspectRatio(
+                          aspectRatio: 1 / 1,
+                          child: args.heatmapPath != null
+                              ? Image.asset(
+                                  args.heatmapPath!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (_, __, ___) =>
+                                      _heatmapPlaceholder(colors),
+                                )
+                              : _heatmapPlaceholder(colors),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      child: AspectRatio(
-                        aspectRatio:
-                            1 / 1, 
-                        child: args.heatmapPath != null
-                            ? Image.asset(
-                                args.heatmapPath!,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                errorBuilder: (_, __, ___) =>
-                                    _heatmapPlaceholder(colors),
-                              )
-                            : _heatmapPlaceholder(colors),
-                      ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm + 2),
+                  Text(
+                    'Red areas show where the disease was found',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontFamily: 'Onest',
+                      color: colors.textSecondary,
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Red areas show where the disease was found',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontFamily: 'Onest',
-                        color: colors.textGray,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -376,7 +387,7 @@ class ScanResultsScreen extends StatelessWidget {
             'SCAN INFORMATION',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               fontFamily: 'Onest',
               letterSpacing: 0.5,

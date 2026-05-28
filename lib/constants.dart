@@ -39,7 +39,8 @@ class AppColors {
   Color get about => isDark ? const Color(0xFFDFDCD2) : const Color(0xFFF1EFE8);
   Color get liveConfidenceBg =>
       isDark ? const Color(0x801A1A1A) : const Color(0xFFF5F5F0);
-  Color get buttonBg => isDark ? const Color(0xFF2C9585) : const Color(0xFF0F6E56);
+  Color get buttonBg =>
+      isDark ? const Color(0xFF2C9585) : const Color(0xFF0F6E56);
 
   // ── text ───────────────────────────────
   Color get textPrimary =>
@@ -80,6 +81,9 @@ class AppColors {
 
   // Black always
   Color get textBlack => const Color(0xFF000000);
+
+  // My Account secondary text
+  Color get infoColor => const Color(0xFF5E5E5E);
 
   // ── Helper methods ────────────────────────────────────────
 
@@ -161,7 +165,7 @@ class AppAssets {
   static const String dateCreated = 'assets/icons/date.png';
   static const String editIcon = 'assets/icons/pencil.png';
   static const String noImage = 'assets/icons/no-image.png';
-  static const String cameraIcon= 'assets/icons/camera.png';
+  static const String cameraIcon = 'assets/icons/camera.png';
   static const String uploadIcon = 'assets/icons/upload.png';
   static const String leafBullet = 'assets/icons/scan-bullet.png';
 }
@@ -180,6 +184,7 @@ class AppRoutes {
   static const String scanHistory = '/scan-history';
   static const String account = '/account';
   static const String myAccount = '/my-account';
+  static const String historyResult = '/history-result';
 }
 
 // ============================================================

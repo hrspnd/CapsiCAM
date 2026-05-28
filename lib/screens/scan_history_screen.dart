@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../constants.dart';
 import 'package:thesis_app/models/scan_result.dart';
+import 'history_result_screen.dart';
 
 // ============================================================
 // SCAN HISTORY SCREEN
@@ -201,6 +202,26 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
                 //   AppRoutes.scanResults,
                 //   extra: {'scan': _scans[index], 'fromHistory': true},
                 // );
+
+                //temporary -- temp data, remove later
+                context.push(
+                  AppRoutes.historyResult,
+                  extra: HistoryResultArgs(
+                    imagePath: _scans[index].imagePath ?? 'assets/icons/sample_leafpic.png',
+                    label: _scans[index].disease,
+                    confidence: _scans[index].confidence,
+                    predictions: {
+                      'Bacterial_Leaf_Spot': 1.0,
+                      'Cercospora_Leaf_Spot': 0.3,
+                      'Healthy': 0.1,
+                    },
+                    source: _scans[index].imageSource,
+                    date: DateTime.now(),
+                    heatmapPath: 'assets/icons/sample_heatmap.png',
+                  ),
+                );
+                //end
+
               },
             ),
           ),
