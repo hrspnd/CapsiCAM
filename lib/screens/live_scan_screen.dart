@@ -3,8 +3,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
+import '../l10n/app_localizations.dart';
 import 'scan_results_screen.dart';
 
 // ============================================================
@@ -377,6 +377,7 @@ class _LiveScanScreenState extends State<LiveScanScreen>
   // ── Capture button ────────────────────────────────────────
 
   Widget _buildCaptureButton(AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       color: colors.background,
       padding: EdgeInsets.only(
@@ -399,7 +400,7 @@ class _LiveScanScreenState extends State<LiveScanScreen>
             ),
           ),
           child: Text(
-            'Capture',
+            l10n.captureButton,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -593,6 +594,8 @@ class _TipsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.xxl),
@@ -604,7 +607,7 @@ class _TipsDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Before you scan',
+              l10n.beforeYouScan,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -614,7 +617,7 @@ class _TipsDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'A few tips for the best results',
+              l10n.tipsSubtitle,
               style: TextStyle(
                 fontSize: 13,
                 fontFamily: 'Onest',

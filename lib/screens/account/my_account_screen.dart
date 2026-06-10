@@ -373,7 +373,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                         if (!context.mounted) return;
                         Navigator.of(context).pop();
                         _showDisplayNameSuccessSnackbar(colors);
-                      } on Exception catch (e) {
+                      } on Exception {
                         setDialogState(() {
                           isLoading = false;
                           nameError = 'Something went wrong. Please try again.';

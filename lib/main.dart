@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -59,7 +61,7 @@ final _router = GoRouter(
   // TODO: Change to AppRoutes.login when auth is ready
 
   // CHANGE INITIAL SCREEN LOCATION
-  initialLocation: AppRoutes.scanHistory, // JOSIE
+  initialLocation: AppRoutes.dashboard, // JOSIE
   // initialLocation: AppRoutes.myAccount, // YAM
   routes: [
     GoRoute(
@@ -135,6 +137,13 @@ class ThesisApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeProvider.themeMode,
       routerConfig: _router,
+      // ── Localization ──────────────────────────────────────
+      locale: themeProvider.locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('fil'),
+      ],
     );
   }
 }

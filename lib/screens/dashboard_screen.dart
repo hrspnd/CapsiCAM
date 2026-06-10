@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../constants.dart';
+import '../l10n/app_localizations.dart';
 import 'package:thesis_app/models/scan_result.dart';
 
 // ============================================================
@@ -25,7 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final String _userName = 'John Doe';
   final int _totalScans = 13;
   final int _totalHealthy = 7;
-  final String? _mostFrequentDisease = 'Bacterial_Leaf_Spot';
+  final String _mostFrequentDisease = 'Bacterial_Leaf_Spot';
 
   final List<ScanResult> _recentScans = [
     ScanResult(
@@ -68,21 +69,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  String get _mostFrequentDisplay {
-    if (_totalScans == 0 || _mostFrequentDisease == null) return 'None';
+  String _mostFrequentDisplay(AppLocalizations l10n) {
+    if (_totalScans == 0) return 'None';
     return "Bacterial\nLeaf Spot";
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get theme-aware colors — pass context so it knows light/dark
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: colors.background,
       body: Column(
         children: [
-          _buildHeader(colors),
+          _buildHeader(colors, l10n),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(
@@ -94,23 +95,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildActionButtons(colors),
+                  _buildActionButtons(colors, l10n),
                   const SizedBox(height: AppSpacing.md),
-                  _buildStatCards(colors),
+                  _buildStatCards(colors, l10n),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildRecentScansSection(colors),
+                  _buildRecentScansSection(colors, l10n),
                 ],
               ),
             ),
           ),
-          _buildBottomNav(colors),
+          _buildBottomNav(colors, l10n),
         ],
       ),
     );
   }
 
   // ── Header ────────────────────────────────────────────────
-  Widget _buildHeader(AppColors colors) {
+
+  Widget _buildHeader(AppColors colors, AppLocalizations l10n) {
     return Container(
       color: colors.primary,
       padding: EdgeInsets.only(
@@ -126,7 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Welcome Back,',
+                l10n.welcomeBack,
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white.withValues(alpha: 0.75),
@@ -147,7 +149,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onTap: () => context.push(AppRoutes.account),
             child: CircleAvatar(
               radius: 22,
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
               child: ClipOval(
                 child: Image.asset(
                   AppAssets.hatAvatar,
@@ -171,7 +173,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ── Action buttons ────────────────────────────────────────
-  Widget _buildActionButtons(AppColors colors) {
+
+  Widget _buildActionButtons(AppColors colors, AppLocalizations l10n) {
     return Row(
       children: [
         Expanded(
@@ -180,9 +183,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             sublabel: 'Real-time scan',
             iconPath: AppAssets.liveCameraIcon,
             colors: colors,
-            onTap: () {
-              context.push(AppRoutes.liveScan);
-            },
+            onTap: () => context.push(AppRoutes.liveScan),
           ),
         ),
         const SizedBox(width: AppSpacing.md),
@@ -192,9 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             sublabel: 'Capture or upload',
             iconPath: AppAssets.captureImageIcon,
             colors: colors,
-            onTap: () {
-              context.push(AppRoutes.captureImage);
-            },
+            onTap: () => context.push(AppRoutes.captureImage),
           ),
         ),
       ],
@@ -202,7 +201,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ── Stat cards ────────────────────────────────────────────
-  Widget _buildStatCards(AppColors colors) {
+
+  Widget _buildStatCards(AppColors colors, AppLocalizations l10n) {
     return Row(
       children: [
         Expanded(
@@ -215,13 +215,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: _StatCard(
-            value: _mostFrequentDisplay,
+            value: _mostFrequentDisplay(l10n),
             label: 'Most Frequent',
             colors: colors,
             valueColor: _totalScans == 0
                 ? colors.textSecondary
                 : colors.bacterial,
-            valueFontSize: _mostFrequentDisplay == 'None' ? 18 : 13,
+            valueFontSize: _mostFrequentDisplay(l10n) == 'None' ? 18 : 13,
             valueFontWeight: FontWeight.w700,
           ),
         ),
@@ -241,7 +241,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ── Recent scans ──────────────────────────────────────────
-  Widget _buildRecentScansSection(AppColors colors) {
+
+  Widget _buildRecentScansSection(AppColors colors, AppLocalizations l10n) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +251,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Recent Scans',
+                l10n.recentScans,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -260,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               GestureDetector(
                 onTap: () => context.push(AppRoutes.scanHistory),
                 child: Text(
-                  'View All',
+                  l10n.viewAll,
                   style: TextStyle(
                     fontSize: 13,
                     color: colors.primaryDark,
@@ -273,7 +274,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
           if (_recentScans.isEmpty)
-            Expanded(child: _buildEmptyState(colors))
+            Expanded(child: _buildEmptyState(colors, l10n))
           else
             Expanded(
               child: Column(
@@ -286,10 +287,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           colors: colors,
                           onTap: () {
                             // TODO: Navigate to scan results from history
-                            // context.push(
-                            //   AppRoutes.scanResults,
-                            //   extra: {'scan': scan, 'fromHistory': true},
-                            // );
                           },
                         ),
                       ),
@@ -302,7 +299,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildEmptyState(AppColors colors) {
+  Widget _buildEmptyState(AppColors colors, AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -323,7 +320,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Your scan history will appear here.\nTap a button above to get started.',
+            l10n.scanHistoryEmpty,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -337,7 +334,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ── Bottom nav ────────────────────────────────────────────
-  Widget _buildBottomNav(AppColors colors) {
+
+  Widget _buildBottomNav(AppColors colors, AppLocalizations l10n) {
     return Container(
       color: colors.primary,
       padding: EdgeInsets.only(
@@ -349,7 +347,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           _NavItem(
             iconPath: AppAssets.historyIcon,
-            label: 'History',
+            label: l10n.scanHistoryTitle,
             isActive: _currentNavIndex == 0,
             onTap: () => _onNavTap(0),
           ),
@@ -513,6 +511,11 @@ class _ScanItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final sourceLabel = scan.imageSource == AppConstants.sourceScanned
+        ? l10n.sourceScanned
+        : l10n.sourceUploaded;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -527,8 +530,6 @@ class _ScanItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Thumbnail
-            // TODO: Replace with Image.network(scan.imageUrl) when Supabase is connected
             Container(
               width: 48,
               height: 48,
@@ -562,7 +563,7 @@ class _ScanItem extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${scan.imageSource} · ${scan.date}',
+                    '$sourceLabel · ${scan.date}',
                     style: TextStyle(fontSize: 11, color: colors.textSecondary),
                   ),
                 ],
@@ -581,7 +582,6 @@ class _NavItem extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
   final String? iconPath;
-  final IconData? icon;
   final double iconSize;
 
   const _NavItem({
@@ -589,13 +589,14 @@ class _NavItem extends StatelessWidget {
     required this.isActive,
     required this.onTap,
     this.iconPath,
-    this.icon,
     this.iconSize = 22,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? Colors.white : Colors.white.withOpacity(0.45);
+    final color = isActive
+        ? Colors.white
+        : Colors.white.withValues(alpha: 0.45);
 
     return GestureDetector(
       onTap: onTap,
@@ -610,9 +611,7 @@ class _NavItem extends StatelessWidget {
               color: color,
               errorBuilder: (_, __, ___) =>
                   Icon(Icons.history, color: color, size: 22),
-            )
-          else
-            Icon(icon, color: color, size: iconSize),
+            ),
           const SizedBox(height: 3),
           Text(
             label,

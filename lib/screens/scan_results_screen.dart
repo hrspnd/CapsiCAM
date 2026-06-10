@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../constants.dart';
+import '../l10n/app_localizations.dart';
 
 // ============================================================
 // SCAN RESULTS SCREEN
@@ -295,13 +296,14 @@ class ScanResultsScreen extends StatelessWidget {
   // ── Scan info + heatmap row ───────────────────────────────
 
   Widget _buildInfoAndHeatmapRow(BuildContext context, AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             flex: 48,
-            child: _buildScanInfo(colors),
+            child: _buildScanInfo(context, colors),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -317,7 +319,7 @@ class ScanResultsScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'POINTS OF INTEREST',
+                    l10n.pointsOfInterest.toUpperCase(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
@@ -352,7 +354,7 @@ class ScanResultsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm + 2),
                   Text(
-                    'Red areas show where the disease was found',
+                    l10n.heatmapCaption,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 10,
@@ -369,7 +371,9 @@ class ScanResultsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScanInfo(AppColors colors) {
+  Widget _buildScanInfo(BuildContext context, AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Column(
       children: [
         Container(
@@ -384,7 +388,7 @@ class ScanResultsScreen extends StatelessWidget {
             border: Border.all(color: colors.border),
           ),
           child: Text(
-            'SCAN INFORMATION',
+            l10n.scanInformation.toUpperCase(),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
@@ -407,11 +411,11 @@ class ScanResultsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInfoRow('Image Source', args.source, colors),
+              _buildInfoRow(l10n.imageSource, args.source, colors),
               const SizedBox(height: AppSpacing.xs),
-              _buildInfoRow('Date', _formattedDate, colors),
+              _buildInfoRow(l10n.dateLabel, _formattedDate, colors),
               const SizedBox(height: AppSpacing.xs),
-              _buildInfoRow('Time', _formattedTime, colors),
+              _buildInfoRow(l10n.timeLabel, _formattedTime, colors),
             ],
           ),
         ),
@@ -518,6 +522,7 @@ class ScanResultsScreen extends StatelessWidget {
   // ── Back to Home button ───────────────────────────────────
 
   Widget _buildBackToHomeButton(BuildContext context, AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.md),
       child: SizedBox(
@@ -534,7 +539,7 @@ class ScanResultsScreen extends StatelessWidget {
             ),
           ),
           child: Text(
-            'Back to Home',
+            l10n.backToHome,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,

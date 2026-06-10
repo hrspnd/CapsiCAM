@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants.dart';
+import '../../l10n/app_localizations.dart';
 
 // ============================================================
 // SIGN UP SCREEN
@@ -46,6 +47,7 @@ class _SignupScreenState extends State<SignupScreen> {
   // ── Validation ────────────────────────────────────────────
 
   bool _validate() {
+    final l10n            = AppLocalizations.of(context)!;
     final displayName     = _displayNameController.text.trim();
     final email           = _emailController.text.trim();
     final password        = _passwordController.text;
@@ -58,31 +60,30 @@ class _SignupScreenState extends State<SignupScreen> {
 
     // Display name
     if (displayName.isEmpty) {
-      displayNameErr = 'Please enter your display name.';
+      displayNameErr = l10n.errorEmptyDisplayName;
     } else if (displayName.length < _minDisplayNameLength) {
-      displayNameErr =
-          'Display name must be at least $_minDisplayNameLength characters.';
+      displayNameErr = l10n.errorDisplayNameTooShort;
     }
 
     // Email
     if (email.isEmpty) {
-      emailErr = 'Please enter your email address.';
+      emailErr = l10n.errorEmptyEmail;
     } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
-      emailErr = 'Please enter a valid email address.';
+      emailErr = l10n.errorInvalidEmail;
     }
 
     // Password
     if (password.isEmpty) {
-      passwordErr = 'Please enter your password.';
+      passwordErr = l10n.errorEmptyPassword;
     } else if (password.length < _minPasswordLength) {
-      passwordErr = 'Password must be at least $_minPasswordLength characters.';
+      passwordErr = l10n.errorPasswordTooShort;
     }
 
     // Confirm password
     if (confirmPassword.isEmpty) {
-      confirmPasswordErr = 'Please confirm your password.';
+      confirmPasswordErr = l10n.errorEmptyConfirmPassword;
     } else if (password.isNotEmpty && confirmPassword != password) {
-      confirmPasswordErr = 'Passwords do not match.';
+      confirmPasswordErr = l10n.errorPasswordsNoMatch;
     }
 
     setState(() {
@@ -123,12 +124,13 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _showSuccessBanner() {
     final colors = AppColors.of(context);
+    final l10n   = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showMaterialBanner(
       MaterialBanner(
         backgroundColor: colors.primaryLightest,
         leading: Icon(Icons.check_circle_outline, color: colors.primaryDark),
         content: Text(
-          'Account created! Please check your email to verify your account.',
+          l10n.accountCreated,
           style: TextStyle(
             fontSize: 13,
             color: colors.primaryDarker,
@@ -154,6 +156,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _handleSupabaseError(String message) {
+    final l10n = AppLocalizations.of(context)!;
     String? emailErr;
     String? passwordErr;
 
@@ -161,19 +164,13 @@ class _SignupScreenState extends State<SignupScreen> {
         message.contains('already exists') ||
         message.contains('User already registered') ||
         message.contains('email_exists')) {
-      emailErr =
-          'An account with this email already exists. Try logging in instead.';
-    } else if (message.contains('weak_password') ||
-        message.contains('Password should be') ||
-        message.contains('password is too weak')) {
-      passwordErr =
-          'Password is too weak. Please choose a stronger password.';
+      emailErr = l10n.errorEmailInUse;
     } else if (message.contains('network') ||
         message.contains('SocketException') ||
         message.contains('connection')) {
-      passwordErr = 'No internet connection. Please check your network.';
+      passwordErr = l10n.errorNetwork;
     } else {
-      passwordErr = 'Something went wrong. Please try again.';
+      passwordErr = l10n.errorServer;
     }
 
     setState(() {
@@ -183,23 +180,22 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _onGoogleSignUp() async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       // TODO: Call Supabase Google OAuth → supabase_service.dart → signUpWithGoogle()
       // TODO: On success → show success banner, then context.go(AppRoutes.login)
     } on Exception catch (e) {
       final msg = e.toString();
-      if (msg.contains('cancelled') || msg.contains('canceled')) return; // silent
+      if (msg.contains('cancelled') || msg.contains('canceled')) return;
       setState(() {
         if (msg.contains('network') || msg.contains('SocketException')) {
-          _passwordError =
-              'No internet connection. Please check your network.';
+          _passwordError = l10n.errorNetwork;
         } else if (msg.contains('already registered') ||
             msg.contains('already exists') ||
             msg.contains('email_exists')) {
-          _passwordError =
-              'An account already exists with this Google account. Try logging in instead.';
+          _passwordError = l10n.errorGoogleEmailInUse;
         } else {
-          _passwordError = 'Something went wrong. Please try again.';
+          _passwordError = l10n.errorServer;
         }
       });
     }
@@ -214,6 +210,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n   = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -228,7 +225,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 horizontal: AppSpacing.lg,
                 vertical: AppSpacing.xxl,
               ),
-              child: _buildCard(colors),
+              child: _buildCard(colors, l10n),
             ),
           ],
         ),
@@ -255,14 +252,14 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // ── Card ──────────────────────────────────────────────────
 
-  Widget _buildCard(AppColors colors) {
+  Widget _buildCard(AppColors colors, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Padding(
           padding: const EdgeInsets.only(right: 14),
           child: Text(
-            'Sign Up',
+            l10n.signUpTitle,
             style: TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.w700,
@@ -290,21 +287,21 @@ class _SignupScreenState extends State<SignupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildEmailField(colors),
+              _buildEmailField(colors, l10n),
               const SizedBox(height: AppSpacing.lg),
-              _buildDisplayNameField(colors),
+              _buildDisplayNameField(colors, l10n),
               const SizedBox(height: AppSpacing.lg),
-              _buildPasswordField(colors),
+              _buildPasswordField(colors, l10n),
               const SizedBox(height: AppSpacing.lg),
-              _buildConfirmPasswordField(colors),
+              _buildConfirmPasswordField(colors, l10n),
               const SizedBox(height: AppSpacing.xxl),
-              _buildSignUpButton(colors),
+              _buildSignUpButton(colors, l10n),
               const SizedBox(height: AppSpacing.lg),
-              _buildLoginRow(colors),
+              _buildLoginRow(colors, l10n),
               const SizedBox(height: AppSpacing.lg),
-              _buildDivider(colors),
+              _buildDivider(colors, l10n),
               const SizedBox(height: AppSpacing.lg),
-              _buildGoogleButton(colors),
+              _buildGoogleButton(colors, l10n),
             ],
           ),
         ),
@@ -314,7 +311,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // ── Email field ───────────────────────────────────────────
 
-  Widget _buildEmailField(AppColors colors) {
+  Widget _buildEmailField(AppColors colors, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -337,7 +334,7 @@ class _SignupScreenState extends State<SignupScreen> {
           },
           decoration: _inputDecoration(
             colors,
-            hint: 'Enter your email',
+            hint: l10n.emailHint,
             errorText: _emailError,
           ),
         ),
@@ -361,12 +358,12 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // ── Display name field ────────────────────────────────────
 
-  Widget _buildDisplayNameField(AppColors colors) {
+  Widget _buildDisplayNameField(AppColors colors, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Display Name',
+          l10n.displayNameLabel,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
@@ -387,7 +384,7 @@ class _SignupScreenState extends State<SignupScreen> {
           },
           decoration: _inputDecoration(
             colors,
-            hint: 'Enter your display name',
+            hint: l10n.displayNameHint,
             errorText: _displayNameError,
           ),
         ),
@@ -411,7 +408,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // ── Password field ────────────────────────────────────────
 
-  Widget _buildPasswordField(AppColors colors) {
+  Widget _buildPasswordField(AppColors colors, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -434,7 +431,7 @@ class _SignupScreenState extends State<SignupScreen> {
           },
           decoration: _inputDecoration(
             colors,
-            hint: 'Enter your password',
+            hint: l10n.passwordHint,
             errorText: _passwordError,
           ).copyWith(
             suffixIcon: GestureDetector(
@@ -470,12 +467,12 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // ── Confirm password field ────────────────────────────────
 
-  Widget _buildConfirmPasswordField(AppColors colors) {
+  Widget _buildConfirmPasswordField(AppColors colors, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Confirm Password',
+          l10n.confirmPasswordLabel,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
@@ -496,7 +493,7 @@ class _SignupScreenState extends State<SignupScreen> {
           },
           decoration: _inputDecoration(
             colors,
-            hint: 'Confirm your password',
+            hint: l10n.confirmPasswordHint,
             errorText: _confirmPasswordError,
           ).copyWith(
             suffixIcon: GestureDetector(
@@ -532,7 +529,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // ── Sign Up button ────────────────────────────────────────
 
-  Widget _buildSignUpButton(AppColors colors) {
+  Widget _buildSignUpButton(AppColors colors, AppLocalizations l10n) {
     return SizedBox(
       width: double.infinity,
       height: 52,
@@ -558,7 +555,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               )
             : Text(
-                'Sign Up',
+                l10n.signUpButton,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -571,7 +568,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // ── Login row ─────────────────────────────────────────────
 
-  Widget _buildLoginRow(AppColors colors) {
+  Widget _buildLoginRow(AppColors colors, AppLocalizations l10n) {
     return Center(
       child: RichText(
         text: TextSpan(
@@ -581,12 +578,12 @@ class _SignupScreenState extends State<SignupScreen> {
             fontFamily: 'Onest',
           ),
           children: [
-            const TextSpan(text: 'Already have an account? '),
+            TextSpan(text: l10n.alreadyHaveAccount),
             WidgetSpan(
               child: GestureDetector(
                 onTap: _onLogin,
                 child: Text(
-                  'Login here',
+                  l10n.loginHere,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -605,14 +602,14 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // ── Or divider ────────────────────────────────────────────
 
-  Widget _buildDivider(AppColors colors) {
+  Widget _buildDivider(AppColors colors, AppLocalizations l10n) {
     return Row(
       children: [
         Expanded(child: Divider(color: colors.border, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Text(
-            'or',
+            l10n.orDivider,
             style: TextStyle(
               fontSize: 13,
               color: colors.textSecondary,
@@ -627,7 +624,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // ── Google button ─────────────────────────────────────────
 
-  Widget _buildGoogleButton(AppColors colors) {
+  Widget _buildGoogleButton(AppColors colors, AppLocalizations l10n) {
     return SizedBox(
       width: double.infinity,
       height: 52,
@@ -652,7 +649,7 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(width: AppSpacing.md),
             Text(
-              'Sign Up with Google',
+              l10n.signUpWithGoogle,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

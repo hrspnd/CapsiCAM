@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../constants.dart';
+import '../l10n/app_localizations.dart';
 import 'package:thesis_app/models/scan_result.dart';
 import 'history_result_screen.dart';
 
@@ -78,6 +79,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
   }
 
   void _onClearHistory() {
+    final l10n = AppLocalizations.of(context)!;
     // TODO: Call Supabase → supabase_service.dart → clearScanHistory()
     // TODO: On success → setState(() => _scans.clear())
     showDialog(
@@ -90,7 +92,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
           ),
           backgroundColor: colors.surface,
           title: Text(
-            'Clear History',
+            l10n.clearHistoryButton,
             style: TextStyle(
               fontFamily: 'Onest',
               fontWeight: FontWeight.w700,
@@ -98,7 +100,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
             ),
           ),
           content: Text(
-            'Are you sure you want to clear all scan history? This cannot be undone.',
+            l10n.clearHistoryConfirm,
             style: TextStyle(
               fontFamily: 'Onest',
               fontSize: 13,
@@ -109,7 +111,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               child: Text(
-                'Cancel',
+                l10n.clearHistoryCancel,
                 style: TextStyle(
                   fontFamily: 'Onest',
                   color: colors.textSecondary,
@@ -122,7 +124,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
                 setState(() => _scans.clear());
               },
               child: Text(
-                'Clear',
+                l10n.clearHistoryConfirmButton,
                 style: TextStyle(
                   fontFamily: 'Onest',
                   fontWeight: FontWeight.w700,
@@ -139,16 +141,17 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n   = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: colors.background,
       body: Column(
         children: [
-          _buildHeader(colors),
+          _buildHeader(colors, l10n),
           Expanded(
             child: _scans.isEmpty
                 ? _buildEmptyState(colors)
-                : _buildScanList(colors),
+                : _buildScanList(colors, l10n),
           ),
           _buildBottomNav(colors),
         ],
@@ -158,7 +161,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
 
   // ── Header ────────────────────────────────────────────────
 
-  Widget _buildHeader(AppColors colors) {
+  Widget _buildHeader(AppColors colors, AppLocalizations l10n) {
     return Container(
       color: colors.primary,
       padding: EdgeInsets.only(
@@ -170,7 +173,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
       child: Row(
         children: [
           Text(
-            'Scan History',
+            l10n.scanHistoryTitle,
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.w700,
@@ -185,7 +188,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
 
   // ── Scan list ─────────────────────────────────────────────
 
-  Widget _buildScanList(AppColors colors) {
+  Widget _buildScanList(AppColors colors, AppLocalizations l10n) {
     return Column(
       children: [
         Expanded(
@@ -207,7 +210,9 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
                 context.push(
                   AppRoutes.historyResult,
                   extra: HistoryResultArgs(
-                    imagePath: _scans[index].imagePath ?? 'assets/icons/sample_leafpic.png',
+                    imagePath:
+                        _scans[index].imagePath ??
+                        'assets/icons/sample_leafpic.png',
                     label: _scans[index].disease,
                     confidence: _scans[index].confidence,
                     predictions: {
@@ -221,14 +226,13 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
                   ),
                 );
                 //end
-
               },
             ),
           ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
-          child: _buildClearHistory(colors),
+          child: _buildClearHistory(colors, l10n),
         ),
       ],
     );
@@ -236,7 +240,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
 
   // ── Clear history ─────────────────────────────────────────
 
-  Widget _buildClearHistory(AppColors colors) {
+  Widget _buildClearHistory(AppColors colors, AppLocalizations l10n) {
     return Column(
       children: [
         Divider(color: colors.border, thickness: 1),
@@ -263,7 +267,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
-                  'Clear History',
+                  l10n.clearHistoryButton,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
@@ -282,6 +286,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
   // ── Empty state ───────────────────────────────────────────
 
   Widget _buildEmptyState(AppColors colors) {
+    final l10n   = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -298,7 +303,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'No scan history yet.',
+              l10n.noScanHistory,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -308,7 +313,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Your completed scans will appear here.',
+              l10n.completedScans,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -378,6 +383,11 @@ class _ScanItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final sourceLabel = scan.imageSource == AppConstants.sourceScanned
+        ? l10n.sourceScanned
+        : l10n.sourceUploaded;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -427,7 +437,7 @@ class _ScanItem extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${scan.imageSource} · ${scan.date}',
+                    '$sourceLabel · ${scan.date}',
                     style: TextStyle(fontSize: 11, color: colors.textSecondary),
                   ),
                 ],
@@ -446,7 +456,6 @@ class _NavItem extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
   final String? iconPath;
-  final IconData? icon;
   final double iconSize;
 
   const _NavItem({
@@ -454,7 +463,6 @@ class _NavItem extends StatelessWidget {
     required this.isActive,
     required this.onTap,
     this.iconPath,
-    this.icon,
     this.iconSize = 22,
   });
 
@@ -477,9 +485,7 @@ class _NavItem extends StatelessWidget {
               color: color,
               errorBuilder: (_, __, ___) =>
                   Icon(Icons.history, color: color, size: 22),
-            )
-          else
-            Icon(icon, color: color, size: iconSize),
+            ),
           const SizedBox(height: 3),
           Text(
             label,

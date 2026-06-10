@@ -36,7 +36,7 @@ class _AccountScreenState extends State<AccountScreen> {
   String _currentLanguage = 'English';
 
   // ── Nav index ─────────────────────────────────────────────
-  int _currentNavIndex = 2;
+  final int _currentNavIndex = 2;
 
   void _onNavTap(int index) {
     if (index == _currentNavIndex) return;
@@ -56,9 +56,9 @@ class _AccountScreenState extends State<AccountScreen> {
   void _showDisplayModeSheet(AppColors colors) {
     final provider = Provider.of<ThemeProvider>(context, listen: false);
     String selected;
-    if (provider.themeMode == ThemeMode.dark)
+    if (provider.themeMode == ThemeMode.dark) {
       selected = 'Dark';
-    else if (provider.themeMode == ThemeMode.system)
+    } else if (provider.themeMode == ThemeMode.system)
       selected = 'System';
     else
       selected = 'Light';
@@ -113,9 +113,9 @@ class _AccountScreenState extends State<AccountScreen> {
                           setSheetState(() => selected = option);
                           setState(() {});
 
-                          if (option == 'Dark')
+                          if (option == 'Dark') {
                             provider.setDark();
-                          else if (option == 'System')
+                          } else if (option == 'System')
                             provider.setSystem();
                           else
                             provider.setLight();
@@ -227,8 +227,11 @@ class _AccountScreenState extends State<AccountScreen> {
                         setSheetState(() => selected = option);
                         setState(() => _currentLanguage = option);
 
-                        // TODO: Apply language via LanguageProvider
-                        // languageProvider.setLanguage(option);
+                        context.read<ThemeProvider>().setLocale(
+                          option == 'Filipino'
+                              ? const Locale('fil')
+                              : const Locale('en'),
+                        );
 
                         Navigator.pop(context);
                       },
@@ -753,7 +756,6 @@ class _NavItem extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
   final String? iconPath;
-  final IconData? icon;
   final double iconSize;
 
   const _NavItem({
@@ -761,7 +763,6 @@ class _NavItem extends StatelessWidget {
     required this.isActive,
     required this.onTap,
     this.iconPath,
-    this.icon,
     this.iconSize = 22,
   });
 
@@ -782,9 +783,7 @@ class _NavItem extends StatelessWidget {
               color: color,
               errorBuilder: (_, __, ___) =>
                   Icon(Icons.history, color: color, size: 22),
-            )
-          else
-            Icon(icon, color: color, size: iconSize),
+            ),
           const SizedBox(height: 3),
           Text(
             label,
