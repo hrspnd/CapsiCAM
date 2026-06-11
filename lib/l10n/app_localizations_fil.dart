@@ -140,7 +140,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get tapBelowHint =>
-      'Pindutin sa ibaba upang kumuha ng larawan o mag-upload mula sa gallery';
+      'Pindutin sa ibaba upang kumuha ng\nlarawan o mag-upload mula sa gallery';
 
   @override
   String get takePhoto => 'Kumuha ng Larawan';
@@ -186,10 +186,22 @@ class AppLocalizationsFil extends AppLocalizations {
   String get aboutLabel => 'Tungkol';
 
   @override
+  String get aboutAppLabel => 'Tungkol sa App';
+
+  @override
+  String get aboutMsg => 'dahon tungkol yes yes yes (placeholder)';
+
+  @override
   String get helpSupport => 'Tulong at Suporta';
 
   @override
+  String get helpSupportmsg => 'tulong pls (placeholder)';
+
+  @override
   String get logOut => 'Mag-log out';
+
+  @override
+  String get logOutSure => 'Sigurado ka bang gusto mong mag-log out?';
 
   @override
   String get editAccount => 'I-edit ang Account';
@@ -198,13 +210,25 @@ class AppLocalizationsFil extends AppLocalizations {
   String get nameLabel => 'Pangalan';
 
   @override
-  String get changePassword => 'Palitan ang password';
+  String get editDisplayName => 'Palitan ang Pangalan';
+
+  @override
+  String get changePassword => 'Palitan ang Password';
 
   @override
   String get accountDetails => 'Detalye ng Account';
 
   @override
-  String get dateCreated => 'Petsa ng Paglikha sa Account';
+  String get dateCreated => 'Petsa ng Paglikha';
+
+  @override
+  String get currentPassword => 'Kasalukuyang Password';
+
+  @override
+  String get newPassword => 'Bagong Password';
+
+  @override
+  String get confirmNewPass => 'Kumpirmahin ang Bagong Password';
 
   @override
   String get errorEmptyEmail => 'Pakilagay ang iyong email address.';
@@ -289,6 +313,5 @@ class AppLocalizationsFil extends AppLocalizations {
       'Pakikumpirma ang iyong bagong password.';
 
   @override
-  String get successPasswordChanged =>
-      'Nabago na ang iyong password! Maaari mo nang gamitin ang iyong account.';
+  String get successPasswordChanged => 'Nabago na ang iyong password!';
 }

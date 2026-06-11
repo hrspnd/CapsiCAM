@@ -353,7 +353,7 @@ abstract class AppLocalizations {
   /// No description provided for @tapBelowHint.
   ///
   /// In en, this message translates to:
-  /// **'Tap below to take a photo or upload from your gallery'**
+  /// **'Tap below to take a photo or\nupload from your gallery'**
   String get tapBelowHint;
 
   /// No description provided for @takePhoto.
@@ -440,17 +440,41 @@ abstract class AppLocalizations {
   /// **'About'**
   String get aboutLabel;
 
+  /// No description provided for @aboutAppLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'About the App'**
+  String get aboutAppLabel;
+
+  /// No description provided for @aboutMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'____ is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0'**
+  String get aboutMsg;
+
   /// No description provided for @helpSupport.
   ///
   /// In en, this message translates to:
   /// **'Help & Support'**
   String get helpSupport;
 
+  /// No description provided for @helpSupportmsg.
+  ///
+  /// In en, this message translates to:
+  /// **'For questions or issues, please contact your system administrator or refer to the thesis documentation.'**
+  String get helpSupportmsg;
+
   /// No description provided for @logOut.
   ///
   /// In en, this message translates to:
   /// **'Log out'**
   String get logOut;
+
+  /// No description provided for @logOutSure.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out?'**
+  String get logOutSure;
 
   /// No description provided for @editAccount.
   ///
@@ -463,6 +487,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Name'**
   String get nameLabel;
+
+  /// No description provided for @editDisplayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Display Name'**
+  String get editDisplayName;
 
   /// No description provided for @changePassword.
   ///
@@ -481,6 +511,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Date Created'**
   String get dateCreated;
+
+  /// No description provided for @currentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Password'**
+  String get currentPassword;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get newPassword;
+
+  /// No description provided for @confirmNewPass.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm New Password'**
+  String get confirmNewPass;
 
   /// No description provided for @errorEmptyEmail.
   ///

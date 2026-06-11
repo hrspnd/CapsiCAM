@@ -139,7 +139,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tapBelowHint =>
-      'Tap below to take a photo or upload from your gallery';
+      'Tap below to take a photo or\nupload from your gallery';
 
   @override
   String get takePhoto => 'Take Photo';
@@ -184,16 +184,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutLabel => 'About';
 
   @override
+  String get aboutAppLabel => 'About the App';
+
+  @override
+  String get aboutMsg =>
+      '____ is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0';
+
+  @override
   String get helpSupport => 'Help & Support';
 
   @override
+  String get helpSupportmsg =>
+      'For questions or issues, please contact your system administrator or refer to the thesis documentation.';
+
+  @override
   String get logOut => 'Log out';
+
+  @override
+  String get logOutSure => 'Are you sure you want to log out?';
 
   @override
   String get editAccount => 'Edit Account';
 
   @override
   String get nameLabel => 'Name';
+
+  @override
+  String get editDisplayName => 'Edit Display Name';
 
   @override
   String get changePassword => 'Change Password';
@@ -203,6 +220,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dateCreated => 'Date Created';
+
+  @override
+  String get currentPassword => 'Current Password';
+
+  @override
+  String get newPassword => 'New Password';
+
+  @override
+  String get confirmNewPass => 'Confirm New Password';
 
   @override
   String get errorEmptyEmail => 'Please enter your email address.';

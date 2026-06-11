@@ -159,19 +159,22 @@ class _LiveScanScreenState extends State<LiveScanScreen>
 
   //temporary : hardcoded information, delete later
   void _onCapture() {
-    context.push(AppRoutes.scanResults, extra: ScanResultsArgs(
-      imagePath:   'assets/icons/sample_leafpic.png',
-      label:       'Bacterial_Leaf_Spot',
-      confidence:  0.91,
-      predictions: {
-        'Bacterial_Leaf_Spot':  0.91,
-        'Cercospora_Leaf_Spot': 0.27,
-        'Healthy':              0.02,
-      },
-      source:      AppConstants.sourceScanned,
-      date:        DateTime.now(),
-      heatmapPath: 'assets/icons/sample_heatmap.png',
-    ));
+    context.push(
+      AppRoutes.scanResults,
+      extra: ScanResultsArgs(
+        imagePath: 'assets/icons/sample_leafpic.png',
+        label: 'Bacterial_Leaf_Spot',
+        confidence: 0.91,
+        predictions: {
+          'Bacterial_Leaf_Spot': 0.91,
+          'Cercospora_Leaf_Spot': 0.27,
+          'Healthy': 0.02,
+        },
+        source: AppConstants.sourceScanned,
+        date: DateTime.now(),
+        heatmapPath: 'assets/icons/sample_heatmap.png',
+      ),
+    );
   }
 
   void _onBack() {
@@ -585,16 +588,10 @@ class _TipsDialog extends StatelessWidget {
 
   const _TipsDialog({required this.colors});
 
-  static const _tips = [
-    'Scan in good lighting for best results',
-    'Center the leaf within the frame',
-    'Hold your phone steady while scanning',
-    'Scan a single leaf at a time for accurate results',
-  ];
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final tips = [l10n.tip1, l10n.tip2, l10n.tip3, l10n.tip4];
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -608,6 +605,7 @@ class _TipsDialog extends StatelessWidget {
           children: [
             Text(
               l10n.beforeYouScan,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -618,6 +616,7 @@ class _TipsDialog extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               l10n.tipsSubtitle,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
                 fontFamily: 'Onest',
@@ -626,7 +625,7 @@ class _TipsDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xl),
 
-            ..._tips.map(
+            ...tips.map(
               (tip) => Padding(
                 padding: const EdgeInsets.only(
                   left: AppSpacing.sm,
@@ -670,7 +669,7 @@ class _TipsDialog extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Got it',
+                  l10n.gotIt,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,

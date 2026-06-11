@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../constants.dart';
+import '../l10n/app_localizations.dart';
 
 // ============================================================
 // CAPTURE IMAGE SCREEN
@@ -186,6 +187,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
   }
 
   Widget _buildEmptyPreview(AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       color: colors.surface,
       child: Column(
@@ -214,7 +216,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'No image selected',
+            l10n.noImageSelected,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -224,7 +226,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Tap below to take a photo or\nupload from your gallery',
+            l10n.tapBelowHint,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -241,6 +243,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
   // ── Take photo button ─────────────────────────────────────
 
   Widget _buildTakePhotoButton(AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: _onTakePhoto,
       child: Container(
@@ -278,7 +281,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
             ),
             const SizedBox(width: AppSpacing.md),
             Text(
-              _selectedImage != null ? 'Take New Photo' : 'Take Photo',
+              _selectedImage != null ? l10n.takeNewPhoto : l10n.takePhoto,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -295,6 +298,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
   // ── Upload button ─────────────────────────────────────────
 
   Widget _buildUploadButton(AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: _onUploadFromGallery,
       child: Container(
@@ -333,8 +337,8 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
             const SizedBox(width: AppSpacing.md),
             Text(
               _selectedImage != null
-                  ? 'Choose Different Photo'
-                  : 'Upload from Gallery',
+                  ? l10n.chooseDifferentPhoto
+                  : l10n.uploadFromGallery,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -351,6 +355,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
   // ── Analyze button ────────────────────────────────────────
 
   Widget _buildAnalyzeButton(AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       color: colors.background,
       padding: EdgeInsets.only(
@@ -374,7 +379,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
             ),
           ),
           child: Text(
-            'Analyze',
+            l10n.analyzeButton,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -397,15 +402,11 @@ class _TipsDialog extends StatelessWidget {
 
   const _TipsDialog({required this.colors});
 
-  static const _tips = [
-    'Scan in good lighting for best results',
-    'Center the leaf within the frame',
-    'Hold your phone steady while scanning',
-    'Scan a single leaf at a time for accurate results',
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final tips = [l10n.tip1, l10n.tip2, l10n.tip3, l10n.tip4];
+
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.xxl),
@@ -418,7 +419,8 @@ class _TipsDialog extends StatelessWidget {
           children: [
             // Title
             Text(
-              'Before you scan',
+              l10n.beforeYouScan,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -428,7 +430,8 @@ class _TipsDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'A few tips for the best results',
+              l10n.tipsSubtitle,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
                 fontFamily: 'Onest',
@@ -438,7 +441,7 @@ class _TipsDialog extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
 
             // Tips list
-            ..._tips.map(
+            ...tips.map(
               (tip) => Padding(
                 padding: const EdgeInsets.only(
                   left: AppSpacing.sm,
@@ -483,7 +486,7 @@ class _TipsDialog extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Got it',
+                  l10n.gotIt,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,

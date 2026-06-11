@@ -109,6 +109,17 @@ class ScanResultsScreen extends StatelessWidget {
     );
   }
 
+  String _translatedSource(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    if (args.source == AppConstants.sourceScanned) {
+      return l10n.sourceScanned;
+    }
+    if (args.source == AppConstants.sourceUploaded) {
+      return l10n.sourceUploaded;
+    }
+    return args.source;
+  }
+
   void _showFullHeatmap(BuildContext context, AppColors colors) {
     if (args.heatmapPath == null) return;
     showDialog(
@@ -301,10 +312,7 @@ class ScanResultsScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            flex: 48,
-            child: _buildScanInfo(context, colors),
-          ),
+          Expanded(flex: 48, child: _buildScanInfo(context, colors)),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             flex: 52,
@@ -411,7 +419,7 @@ class ScanResultsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInfoRow(l10n.imageSource, args.source, colors),
+              _buildInfoRow(l10n.imageSource, _translatedSource(context),colors),
               const SizedBox(height: AppSpacing.xs),
               _buildInfoRow(l10n.dateLabel, _formattedDate, colors),
               const SizedBox(height: AppSpacing.xs),

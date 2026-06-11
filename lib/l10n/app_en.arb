@@ -48,7 +48,7 @@
 
   "captureButton": "Capture",
   "noImageSelected": "No image selected",
-  "tapBelowHint": "Tap below to take a photo or upload from your gallery",
+  "tapBelowHint": "Tap below to take a photo or\nupload from your gallery",
   "takePhoto": "Take Photo",
   "takeNewPhoto": "Take New Photo",
   "uploadFromGallery": "Upload from Gallery",
@@ -65,14 +65,22 @@
 
   "languageLabel": "Language",
   "aboutLabel": "About",
+  "aboutAppLabel": "About the App",
+  "aboutMsg": "____ is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0",
   "helpSupport": "Help & Support",
+  "helpSupportmsg": "For questions or issues, please contact your system administrator or refer to the thesis documentation.",
   "logOut": "Log out",
+  "logOutSure": "Are you sure you want to log out?",
 
   "editAccount": "Edit Account",
   "nameLabel": "Name",
+  "editDisplayName": "Edit Display Name",
   "changePassword": "Change Password",
   "accountDetails": "Account Details",
   "dateCreated": "Date Created",
+  "currentPassword": "Current Password",
+  "newPassword": "New Password",
+  "confirmNewPass": "Confirm New Password",
 
   "errorEmptyEmail": "Please enter your email address.",
   "errorInvalidEmail": "Please enter a valid email address.",

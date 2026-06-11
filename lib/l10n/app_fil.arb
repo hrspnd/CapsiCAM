@@ -46,7 +46,7 @@
 
   "captureButton": "Picturan",
   "noImageSelected": "Walang napiling larawan",
-  "tapBelowHint": "Pindutin sa ibaba upang kumuha ng larawan o mag-upload mula sa gallery",
+  "tapBelowHint": "Pindutin sa ibaba upang kumuha ng\nlarawan o mag-upload mula sa gallery",
   "takePhoto": "Kumuha ng Larawan",
   "takeNewPhoto": "Kumuha ng Bagong Larawan",
   "uploadFromGallery": "Mag-upload mula sa gallery",
@@ -63,14 +63,22 @@
 
   "languageLabel": "Lengguwahe",
   "aboutLabel": "Tungkol",
+  "aboutAppLabel": "Tungkol sa App",
+  "aboutMsg": "dahon tungkol yes yes yes (placeholder)",
   "helpSupport": "Tulong at Suporta",
+  "helpSupportmsg": "tulong pls (placeholder)",
   "logOut": "Mag-log out",
+  "logOutSure": "Sigurado ka bang gusto mong mag-log out?",
 
   "editAccount": "I-edit ang Account",
   "nameLabel": "Pangalan",
-  "changePassword": "Palitan ang password",
+  "editDisplayName": "Palitan ang Pangalan",
+  "changePassword": "Palitan ang Password",
   "accountDetails": "Detalye ng Account",
-  "dateCreated": "Petsa ng Paglikha sa Account",
+  "dateCreated": "Petsa ng Paglikha",
+  "currentPassword": "Kasalukuyang Password",
+  "newPassword": "Bagong Password",
+  "confirmNewPass": "Kumpirmahin ang Bagong Password",
 
   "errorEmptyEmail": "Pakilagay ang iyong email address.",
   "errorInvalidEmail": "Pakilagyan ng balidong email address.",
@@ -97,5 +105,5 @@
   "errorEmptyNewPassword": "Ilagay ang iyong bagong password.",
   "errorSamePassword": "Ang bagong password ay dapat iba sa kasalukuyang password.",
   "errorEmptyConfirmNewPassword": "Pakikumpirma ang iyong bagong password.",
-  "successPasswordChanged": "Nabago na ang iyong password! Maaari mo nang gamitin ang iyong account."
+  "successPasswordChanged": "Nabago na ang iyong password!"
 }

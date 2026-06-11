@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../constants.dart';
 import '../../theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:thesis_app/l10n/app_localizations.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -177,8 +178,11 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   void _showLanguageSheet(AppColors colors) {
-    String selected = _currentLanguage;
+    String selected = Localizations.localeOf(context).languageCode == 'fil'
+        ? 'Filipino'
+        : 'English';
     final options = ['English', 'Filipino'];
+    final l10n = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -212,7 +216,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                   ),
                   Text(
-                    'Language',
+                    l10n.languageLabel,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -289,6 +293,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   void _showAboutDialog(AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -297,7 +302,7 @@ class _AccountScreenState extends State<AccountScreen> {
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         title: Text(
-          'About',
+          l10n.aboutLabel,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -305,7 +310,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ),
         content: Text(
-          '____ is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0',
+          l10n.aboutMsg,
           style: TextStyle(
             fontSize: 13,
             color: colors.textSecondary,
@@ -323,6 +328,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   void _showHelpDialog(AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -331,7 +337,7 @@ class _AccountScreenState extends State<AccountScreen> {
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         title: Text(
-          'Help & Support',
+          l10n.helpSupport,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -339,7 +345,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ),
         content: Text(
-          'For questions or issues, please contact your system administrator or refer to the thesis documentation.',
+          l10n.helpSupportmsg,
           style: TextStyle(
             fontSize: 13,
             color: colors.textSecondary,
@@ -357,6 +363,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   void _showLogOutDialog(AppColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -365,7 +372,7 @@ class _AccountScreenState extends State<AccountScreen> {
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         title: Text(
-          'Log Out',
+          l10n.logOut,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -373,7 +380,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ),
         content: Text(
-          'Are you sure you want to log out?',
+          l10n.logOutSure,
           style: TextStyle(fontSize: 13, color: colors.textSecondary),
         ),
         actions: [
@@ -408,6 +415,7 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -435,20 +443,23 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                     _SettingsRow(
                       iconPath: AppAssets.languageIcon,
-                      label: 'Language',
-                      value: _currentLanguage,
+                      label: l10n.languageLabel,
+                      value:
+                          Localizations.localeOf(context).languageCode == 'fil'
+                          ? 'Filipino'
+                          : 'English',
                       colors: colors,
                       onTap: () => _showLanguageSheet(colors),
                       iconColor: colors.appSettingsIcon,
                     ),
                   ], colors),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildSectionLabel('About', colors),
+                  _buildSectionLabel(l10n.aboutAppLabel, colors),
                   const SizedBox(height: AppSpacing.sm),
                   _buildSettingsGroup([
                     _SettingsRow(
                       iconPath: AppAssets.aboutIcon,
-                      label: 'About',
+                      label: l10n.aboutLabel,
                       colors: colors,
                       onTap: () => _showAboutDialog(colors),
                       iconBgColor: colors.about,
@@ -456,7 +467,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                     _SettingsRow(
                       iconPath: AppAssets.helpIcon,
-                      label: 'Help & Support',
+                      label: l10n.helpSupport,
                       colors: colors,
                       onTap: () => _showHelpDialog(colors),
                       iconBgColor: colors.about,
@@ -481,8 +492,8 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Log Out',
+                      child: Text(
+                        l10n.logOut,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,

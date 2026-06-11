@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../constants.dart';
 import 'package:go_router/go_router.dart';
+import 'package:thesis_app/l10n/app_localizations.dart';
 
 class MyAccountScreen extends StatefulWidget {
   const MyAccountScreen({super.key});
@@ -258,6 +259,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
 
   // ── Edit name dialog ──────────────────────────────────────
   void _showEditNameDialog(AppColors colors) {
+  final l10n = AppLocalizations.of(context)!;
   final controller = TextEditingController(text: _userName);
   String? nameError;
   bool isLoading = false;
@@ -276,7 +278,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           title: Text(
-            'Edit Display Name',
+            l10n.editDisplayName,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -299,7 +301,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     }
                   },
                   decoration: InputDecoration(
-                    labelText: 'Display Name',
+                    labelText: l10n.nameLabel,
                     labelStyle: TextStyle(
                       fontSize: 13,
                       color: colors.textSecondary,
@@ -350,11 +352,11 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                       String? err;
 
                       if (value.isEmpty) {
-                        err = 'Please enter your display name.';
+                        err = l10n.errorEmptyDisplayName;
                       } else if (value.length < 2) {
-                        err = 'Display name must be at least 2 characters.';
+                        err = l10n.errorDisplayNameTooShort;
                       } else if (value.length > 32) {
-                        err = 'Display name must be under 32 characters.';
+                        err = l10n.errorDisplayNameTooLong;
                       }
 
                       if (err != null) {
@@ -376,7 +378,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                       } on Exception {
                         setDialogState(() {
                           isLoading = false;
-                          nameError = 'Something went wrong. Please try again.';
+                          nameError = l10n.errorServer;
                         });
                       }
                     },
@@ -406,6 +408,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
 }
 
 void _showDisplayNameSuccessSnackbar(AppColors colors) {
+  final l10n = AppLocalizations.of(context)!;
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Row(
@@ -414,7 +417,7 @@ void _showDisplayNameSuccessSnackbar(AppColors colors) {
               color: colors.textWhite, size: 18),
           const SizedBox(width: AppSpacing.sm),
           Text(
-            'Display name updated successfully.',
+            l10n.successDisplayName,
             style: TextStyle(
               fontFamily: 'Onest',
               color: colors.textWhite,
@@ -447,6 +450,7 @@ void _showDisplayNameSuccessSnackbar(AppColors colors) {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -539,12 +543,12 @@ void _showDisplayNameSuccessSnackbar(AppColors colors) {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildSectionLabel('Edit Account', colors),
+                  _buildSectionLabel(l10n.editAccount, colors),
                   const SizedBox(height: AppSpacing.sm),
                   _buildSettingsGroup([
                     _SettingsRow(
                       iconPath: AppAssets.nameIcon,
-                      label: 'Display Name',
+                      label: l10n.displayNameLabel,
                       value: _userName,
                       colors: colors,
                       iconBgColor: colors.primaryLightest,
@@ -553,7 +557,7 @@ void _showDisplayNameSuccessSnackbar(AppColors colors) {
                     ),
                     _SettingsRow(
                       iconPath: AppAssets.changePassword,
-                      label: 'Change Password',
+                      label: l10n.changePassword,
                       colors: colors,
                       iconBgColor: colors.primaryLightest,
                       iconColor: colors.primaryDark,
@@ -561,12 +565,12 @@ void _showDisplayNameSuccessSnackbar(AppColors colors) {
                     ),
                   ], colors),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildSectionLabel('Account Details', colors),
+                  _buildSectionLabel(l10n.accountDetails, colors),
                   const SizedBox(height: AppSpacing.sm),
                   _buildSettingsGroup([
                     _SettingsRow(
                       iconPath: AppAssets.dateCreated,
-                      label: 'Date Created',
+                      label: l10n.dateCreated,
                       value: _dateCreated,
                       colors: colors,
                       iconBgColor: colors.about,
@@ -695,27 +699,28 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
     final current = _currentController.text;
     final newPass = _newController.text;
     final confirm = _confirmController.text;
+    final l10n = AppLocalizations.of(context)!;
 
     String? currentErr;
     String? newErr;
     String? confirmErr;
 
     if (current.isEmpty) {
-      currentErr = 'Please enter your current password.';
+      currentErr = l10n.errorEmptyCurrentPassword;
     }
 
     if (newPass.isEmpty) {
-      newErr = 'Please enter a new password.';
+      newErr = l10n.errorEmptyNewPassword;
     } else if (newPass.length < 8) {
-      newErr = 'Password must be at least 8 characters.';
+      newErr = l10n.errorPasswordTooShort;
     } else if (newPass == current && current.isNotEmpty) {
-      newErr = 'New password must be different from your current password.';
+      newErr = l10n.errorSamePassword;
     }
 
     if (confirm.isEmpty) {
-      confirmErr = 'Please confirm your new password.';
+      confirmErr = l10n.errorEmptyConfirmNewPassword;
     } else if (newPass.isNotEmpty && confirm != newPass) {
-      confirmErr = 'Passwords do not match.';
+      confirmErr = l10n.errorPasswordsNoMatch;
     }
 
     setState(() {
@@ -751,22 +756,20 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
   }
 
   void _handleSupabaseError(String message) {
+    final l10n = AppLocalizations.of(context)!;
     String? currentErr;
     String? newErr;
 
     if (message.contains('Invalid login credentials') ||
         message.contains('invalid_credentials') ||
         message.contains('wrong password')) {
-      currentErr = 'Incorrect password. Please try again.';
-    } else if (message.contains('weak_password') ||
-        message.contains('Password should be')) {
-      newErr = 'Password is too weak. Please choose a stronger password.';
+      currentErr = l10n.errorWrongPassword;
     } else if (message.contains('network') ||
         message.contains('SocketException') ||
         message.contains('connection')) {
-      newErr = 'No internet connection. Please check your network.';
+      newErr = l10n.errorNetwork;
     } else {
-      newErr = 'Something went wrong. Please try again.';
+      newErr = l10n.errorServer;
     }
 
     setState(() {
@@ -776,6 +779,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
   }
 
   void _showSuccessSnackbar() {
+    final l10n = AppLocalizations.of(context)!;
     final colors = widget.colors;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -785,7 +789,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                 color: colors.textWhite, size: 18),
             const SizedBox(width: AppSpacing.sm),
             Text(
-              "Password changed! You're all set.",
+              l10n.successPasswordChanged,
               style: TextStyle(
                 fontFamily: 'Onest',
                 color: colors.textWhite,
@@ -810,6 +814,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = widget.colors;
+    final l10n = AppLocalizations.of(context)!;
 
     return AlertDialog(
       backgroundColor: colors.surface,
@@ -817,7 +822,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       title: Text(
-        'Change Password',
+        l10n.changePassword,
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -830,7 +835,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildPasswordField(
-            label: 'Current Password',
+            label: l10n.currentPassword,
             controller: _currentController,
             errorText: _currentError,
             colors: colors,
@@ -840,7 +845,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
           ),
           const SizedBox(height: AppSpacing.md),
           _buildPasswordField(
-            label: 'New Password',
+            label: l10n.newPassword,
             controller: _newController,
             errorText: _newError,
             colors: colors,
@@ -850,7 +855,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
           ),
           const SizedBox(height: AppSpacing.md),
           _buildPasswordField(
-            label: 'Confirm New Password',
+            label: l10n.confirmNewPass,
             controller: _confirmController,
             errorText: _confirmError,
             colors: colors,
