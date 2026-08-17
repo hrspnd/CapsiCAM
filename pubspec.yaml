@@ -37,15 +37,15 @@ dependencies:
   go_router: ^14.0.0
 
   # TFLite
-  tflite_flutter: ^0.12.0
+  tflite_flutter: ^0.12.1
 
   # Camera & Image
   camera: ^0.11.0
   image_picker: ^1.0.4
-  image: ^4.0.17
+  image: ^4.8.0
 
   # Supabase
-  supabase_flutter: ^2.0.0
+  supabase_flutter: ^2.17.2
 
   # Local storage
   sqflite: ^2.3.0
@@ -63,6 +63,8 @@ dependencies:
   # Theme Provider
   provider: ^6.1.2
   intl: ^0.20.2
+  path_provider: ^2.1.5
+  uuid: ^4.6.0
 
 dev_dependencies:
   flutter_test:
@@ -95,8 +97,12 @@ flutter:
   generate: true
   uses-material-design: true
   assets:
-    - assets/icons/
     - assets/
+    - assets/icons/
+    - assets/fonts/
+    - assets/model/model_dual_output.tflite
+    - assets/model/class_names.json
+    - assets/model/cam_weights.json
 
   fonts:
     - family: Onest

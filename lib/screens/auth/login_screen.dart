@@ -114,26 +114,6 @@ class _LoginScreenState extends State<LoginScreen> {
     // or show a bottom sheet / dialog
   }
 
-  Future<void> _onGoogleSignIn() async {
-    final l10n = AppLocalizations.of(context)!;
-    try {
-      // TODO: Call Supabase Google OAuth → supabase_service.dart → signInWithGoogle()
-      // TODO: On success → context.go(AppRoutes.dashboard)
-    } on Exception catch (e) {
-      final msg = e.toString();
-      if (msg.contains('cancelled') || msg.contains('canceled')) return;
-      setState(() {
-        if (msg.contains('network') || msg.contains('SocketException')) {
-          _passwordError = l10n.errorNetwork;
-        } else if (msg.contains('not found') || msg.contains('no account')) {
-          _passwordError = l10n.errorGoogleNoAccount;
-        } else {
-          _passwordError = l10n.errorServer;
-        }
-      });
-    }
-  }
-
   void _onSignUp() {
     context.push(AppRoutes.signup);
   }
@@ -223,10 +203,6 @@ class _LoginScreenState extends State<LoginScreen> {
               _buildLoginButton(colors, l10n),
               const SizedBox(height: AppSpacing.lg),
               _buildSignUpRow(colors, l10n),
-              const SizedBox(height: AppSpacing.lg),
-              _buildDivider(colors, l10n),
-              const SizedBox(height: AppSpacing.lg),
-              _buildGoogleButton(colors, l10n),
             ],
           ),
         ),
@@ -399,64 +375,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     decorationColor: colors.textPrimary,
                   ),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Or divider ────────────────────────────────────────────
-
-  Widget _buildDivider(AppColors colors, AppLocalizations l10n) {
-    return Row(
-      children: [
-        Expanded(child: Divider(color: colors.border, thickness: 1)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Text(
-            l10n.orDivider,
-            style: TextStyle(fontSize: 13, color: colors.textSecondary, fontFamily: 'Onest'),
-          ),
-        ),
-        Expanded(child: Divider(color: colors.border, thickness: 1)),
-      ],
-    );
-  }
-
-  // ── Google button ─────────────────────────────────────────
-
-  Widget _buildGoogleButton(AppColors colors, AppLocalizations l10n) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton(
-        onPressed: _onGoogleSignIn,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: colors.border),
-          foregroundColor: colors.textPrimary,
-          backgroundColor: colors.surface,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              AppAssets.googleIcon,
-              width: 24,
-              height: 24,
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Text(
-              l10n.logInWithGoogle,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
               ),
             ),
           ],

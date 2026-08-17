@@ -179,28 +179,6 @@ class _SignupScreenState extends State<SignupScreen> {
     });
   }
 
-  Future<void> _onGoogleSignUp() async {
-    final l10n = AppLocalizations.of(context)!;
-    try {
-      // TODO: Call Supabase Google OAuth → supabase_service.dart → signUpWithGoogle()
-      // TODO: On success → show success banner, then context.go(AppRoutes.login)
-    } on Exception catch (e) {
-      final msg = e.toString();
-      if (msg.contains('cancelled') || msg.contains('canceled')) return;
-      setState(() {
-        if (msg.contains('network') || msg.contains('SocketException')) {
-          _passwordError = l10n.errorNetwork;
-        } else if (msg.contains('already registered') ||
-            msg.contains('already exists') ||
-            msg.contains('email_exists')) {
-          _passwordError = l10n.errorGoogleEmailInUse;
-        } else {
-          _passwordError = l10n.errorServer;
-        }
-      });
-    }
-  }
-
   void _onLogin() {
     context.go(AppRoutes.login);
   }
@@ -298,10 +276,6 @@ class _SignupScreenState extends State<SignupScreen> {
               _buildSignUpButton(colors, l10n),
               const SizedBox(height: AppSpacing.lg),
               _buildLoginRow(colors, l10n),
-              const SizedBox(height: AppSpacing.lg),
-              _buildDivider(colors, l10n),
-              const SizedBox(height: AppSpacing.lg),
-              _buildGoogleButton(colors, l10n),
             ],
           ),
         ),
@@ -592,68 +566,6 @@ class _SignupScreenState extends State<SignupScreen> {
                     decorationColor: colors.textPrimary,
                   ),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Or divider ────────────────────────────────────────────
-
-  Widget _buildDivider(AppColors colors, AppLocalizations l10n) {
-    return Row(
-      children: [
-        Expanded(child: Divider(color: colors.border, thickness: 1)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Text(
-            l10n.orDivider,
-            style: TextStyle(
-              fontSize: 13,
-              color: colors.textSecondary,
-              fontFamily: 'Onest',
-            ),
-          ),
-        ),
-        Expanded(child: Divider(color: colors.border, thickness: 1)),
-      ],
-    );
-  }
-
-  // ── Google button ─────────────────────────────────────────
-
-  Widget _buildGoogleButton(AppColors colors, AppLocalizations l10n) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton(
-        onPressed: _onGoogleSignUp,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: colors.border),
-          foregroundColor: colors.textPrimary,
-          backgroundColor: colors.surface,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              AppAssets.googleIcon,
-              width: 24,
-              height: 24,
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Text(
-              l10n.signUpWithGoogle,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
               ),
             ),
           ],

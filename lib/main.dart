@@ -4,6 +4,8 @@ import 'l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'constants.dart';
 import 'theme_provider.dart';
 import 'screens/auth/login_screen.dart';
@@ -18,23 +20,16 @@ import 'screens/scan_results_screen.dart';
 import 'screens/history_result_screen.dart';
 
 // ============================================================
-// SUPABASE INIT — uncomment and add credentials when ready
+// SUPABASE INIT
 // ============================================================
-// Future<void> main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-//   await Supabase.initialize(
-//     url: 'YOUR_SUPABASE_URL',
-//     anonKey: 'YOUR_SUPABASE_ANON_KEY',
-//   );
-//   runApp(
-//     ChangeNotifierProvider(
-//       create: (_) => ThemeProvider(),
-//       child: const ThesisApp(),
-//     ),
-//   );
-// }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
+  await Supabase.initialize(
+    url: 'https://urcxjpcvnhebqomcamuf.supabase.co',
+    anonKey: 'sb_publishable_0fsa0DkN88ZykQNz_eYaMA_p7gsjHTV',
+  );
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
@@ -61,7 +56,7 @@ final _router = GoRouter(
   // TODO: Change to AppRoutes.login when auth is ready
 
   // CHANGE INITIAL SCREEN LOCATION
-  initialLocation: AppRoutes.dashboard, // JOSIE
+  initialLocation: AppRoutes.login, // JOSIE
   // initialLocation: AppRoutes.myAccount, // YAM
   routes: [
     GoRoute(
@@ -140,10 +135,7 @@ class ThesisApp extends StatelessWidget {
       // ── Localization ──────────────────────────────────────
       locale: themeProvider.locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: const [
-        Locale('en'),
-        Locale('fil'),
-      ],
+      supportedLocales: const [Locale('en'), Locale('fil')],
     );
   }
 }
