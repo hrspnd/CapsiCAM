@@ -2,9 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../constants.dart';
 import '../l10n/app_localizations.dart';
 import 'package:thesis_app/models/scan_result.dart';
+import 'package:thesis_app/services/supabase_service.dart';
 
 // ============================================================
 // DASHBOARD SCREEN
@@ -19,40 +21,105 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   // ── Supabase data ─────────────────────────────────────────
-  // TODO: Replace with real data from Supabase
-  // services/supabase_service.dart → fetchDashboardStats()
-  // services/supabase_service.dart → fetchRecentScans(limit: 3)
+  final _supabaseService = SupabaseService();
 
-  final String _userName = 'John Doe';
-  final int _totalScans = 13;
-  final int _totalHealthy = 7;
-  final String _mostFrequentDisease = 'Bacterial_Leaf_Spot';
+  String _userName = '';
+  int _totalScans = 0;
+  int _totalHealthy = 0;
+  String? _mostFrequentDisease; // raw classification, e.g. 'bacterial_leaf_spot'
+  List<ScanResult> _recentScans = const [];
 
-  final List<ScanResult> _recentScans = [
-    ScanResult(
-      id: '1',
-      disease: 'Bacterial_Leaf_Spot',
-      imageSource: AppConstants.sourceScanned,
-      date: 'Apr 24, 2026',
-      confidence: 0.91,
-    ),
-    ScanResult(
-      id: '2',
-      disease: 'Healthy',
-      imageSource: AppConstants.sourceUploaded,
-      date: 'Apr 24, 2026',
-      confidence: 0.97,
-    ),
-    ScanResult(
-      id: '3',
-      disease: 'Cercospora_Leaf_Spot',
-      imageSource: AppConstants.sourceUploaded,
-      date: 'Apr 24, 2026',
-      confidence: 0.81,
-    ),
-  ];
+  bool _isLoading = true;
+  bool _isOffline = false;
+  String? _errorMessage;
 
   int _currentNavIndex = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboard();
+  }
+
+  Future<void> _loadDashboard() async {
+    setState(() {
+      _isLoading = true;
+      _isOffline = false;
+      _errorMessage = null;
+    });
+
+    try {
+      final results = await Future.wait([
+        _supabaseService.fetchFullName(),
+        _supabaseService.fetchDashboardStats(),
+        _supabaseService.fetchRecentScans(limit: 3),
+      ]);
+
+      final fullName = results[0] as String?;
+      final stats = results[1] as DashboardStats;
+      final scanRows = results[2] as List<Map<String, dynamic>>;
+
+      if (!mounted) return;
+      setState(() {
+        _userName = fullName ?? 'there';
+        _totalScans = stats.totalScans;
+        _totalHealthy = stats.totalHealthy;
+        _mostFrequentDisease = stats.mostFrequentDisease;
+        _recentScans = scanRows.map(_scanFromRow).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final isOffline = e.toString().contains('offline');
+      setState(() {
+        _isLoading = false;
+        _isOffline = isOffline;
+        _errorMessage = isOffline
+            ? "You're offline. Showing what we could load."
+            : "Couldn't load your dashboard. Pull down or tap retry.";
+      });
+    }
+  }
+
+  // ── Row → ScanResult mapping ───────────────────────────────
+
+  static const Map<String, String> _diseaseDisplayKeys = {
+    'healthy': 'Healthy',
+    'bacterial_leaf_spot': 'Bacterial_Leaf_Spot',
+    'cercospora_leaf_spot': 'Cercospora_Leaf_Spot',
+  };
+
+  ScanResult _scanFromRow(Map<String, dynamic> row) {
+    final classification = row['classification'] as String;
+
+    double confidence;
+    switch (classification) {
+      case 'healthy':
+        confidence = (row['confidence_healthy'] as num).toDouble();
+        break;
+      case 'bacterial_leaf_spot':
+        confidence = (row['confidence_bls'] as num).toDouble();
+        break;
+      case 'cercospora_leaf_spot':
+        confidence = (row['confidence_cls'] as num).toDouble();
+        break;
+      default:
+        confidence = 0.0;
+    }
+
+    final scannedAt = DateTime.parse(row['scanned_at'] as String).toLocal();
+
+    return ScanResult(
+      id: row['id'] as String,
+      disease: _diseaseDisplayKeys[classification] ?? classification,
+      imageSource: row['image_source'] == 'captured'
+          ? AppConstants.sourceScanned
+          : AppConstants.sourceUploaded,
+      date: DateFormat('MMM d, yyyy').format(scannedAt),
+      confidence: confidence,
+      imagePath: row['image_url'] as String?,
+    );
+  }
 
   void _onNavTap(int index) {
     if (index == _currentNavIndex) return;
@@ -70,8 +137,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _mostFrequentDisplay(AppLocalizations l10n) {
-    if (_totalScans == 0) return 'None';
-    return "Bacterial\nLeaf Spot";
+    final key = _mostFrequentDisease;
+    if (_totalScans == 0 || key == null) return 'None';
+    final display = _diseaseDisplayKeys[key] ?? key;
+    final words = display.split('_');
+    if (words.length <= 1) return display;
+    return '${words.first}\n${words.sublist(1).join(' ')}';
   }
 
   @override
@@ -92,19 +163,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 right: AppSpacing.lg,
                 bottom: AppSpacing.lg,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildActionButtons(colors, l10n),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildStatCards(colors, l10n),
-                  const SizedBox(height: AppSpacing.lg),
-                  _buildRecentScansSection(colors, l10n),
-                ],
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_errorMessage != null) ...[
+                          _buildStatusBanner(colors),
+                          const SizedBox(height: AppSpacing.md),
+                        ],
+                        _buildActionButtons(colors, l10n),
+                        const SizedBox(height: AppSpacing.md),
+                        _buildStatCards(colors, l10n),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildRecentScansSection(colors, l10n),
+                      ],
+                    ),
             ),
           ),
           _buildBottomNav(colors),
+        ],
+      ),
+    );
+  }
+
+  // ── Status banner (offline / error) ─────────────────────────
+
+  Widget _buildStatusBanner(AppColors colors) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: colors.surfaceGray,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _isOffline ? Icons.wifi_off : Icons.error_outline,
+            size: 18,
+            color: colors.textSecondary,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              _errorMessage ?? '',
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+            ),
+          ),
+          GestureDetector(
+            onTap: _loadDashboard,
+            child: Text(
+              'Retry',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: colors.primaryDark,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -533,7 +652,25 @@ class _ScanItem extends StatelessWidget {
               child: scan.imagePath != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Image.asset(scan.imagePath!, fit: BoxFit.cover),
+                      child: Image.network(
+                        scan.imagePath!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.eco_outlined,
+                          color: colors.forDisease(scan.disease),
+                          size: 24,
+                        ),
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return Center(
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
+                        },
+                      ),
                     )
                   : Icon(
                       Icons.eco_outlined,

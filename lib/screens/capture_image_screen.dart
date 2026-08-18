@@ -9,6 +9,7 @@ import 'package:image/image.dart' as img;
 import '../constants.dart';
 import '../l10n/app_localizations.dart';
 import '../services/disease_classifier_service.dart';
+import '../services/scan_service.dart';
 import 'scan_results_screen.dart'; // for ScanResultsArgs
 
 // Add path_provider if not already present:
@@ -31,6 +32,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
   final _picker = ImagePicker();
 
   final _classifier = DiseaseClassifierService();
+  final _scanService = ScanService();
   bool _isAnalyzing = false;
 
   // Translates the model's raw output class names to the exact strings
@@ -134,6 +136,19 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
         date: DateTime.now(),
         heatmapPath: heatmapPath,
       );
+
+      // Persist the scan (image + classification) to Supabase. If this
+      // fails, the user still sees their result — we just surface a
+      // warning rather than blocking navigation on a save error.
+      try {
+        await _scanService.saveScan(args);
+      } catch (saveError) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Scan analyzed but not saved: $saveError')),
+          );
+        }
+      }
 
       if (!mounted) return;
       context.push(AppRoutes.scanResults, extra: args);

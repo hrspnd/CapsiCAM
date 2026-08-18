@@ -201,7 +201,7 @@ class AppConstants {
     'Healthy',
   ];
 
-  static const String sourceScanned = 'Scanned';
+  static const String sourceScanned = 'Captured';
   static const String sourceUploaded = 'Uploaded';
 }
 
