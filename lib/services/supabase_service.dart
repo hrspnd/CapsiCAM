@@ -143,4 +143,36 @@ class SupabaseService {
       throw Exception('Could not load recent scans: ${e.message}');
     }
   }
+
+  /// All scans for the current user, newest first. Used by the full
+  /// Scan History screen (fetchRecentScans is for the dashboard's
+  /// capped preview list).
+  Future<List<Map<String, dynamic>>> fetchAllScans() async {
+    try {
+      final rows = await _client
+          .from('scans')
+          .select()
+          .eq('user_id', _requireUserId)
+          .order('scanned_at', ascending: false);
+      return List<Map<String, dynamic>>.from(rows as List);
+    } on SocketException {
+      throw Exception('offline');
+    } on PostgrestException catch (e) {
+      throw Exception('Could not load scan history: ${e.message}');
+    }
+  }
+
+  /// Deletes all scan rows for the current user. Does not remove the
+  /// underlying files from the scan-images Storage bucket — those are
+  /// left in place (cheap to leave orphaned for now; revisit if
+  /// storage costs become a concern).
+  Future<void> clearScanHistory() async {
+    try {
+      await _client.from('scans').delete().eq('user_id', _requireUserId);
+    } on SocketException {
+      throw Exception('offline');
+    } on PostgrestException catch (e) {
+      throw Exception('Could not clear scan history: ${e.message}');
+    }
+  }
 }

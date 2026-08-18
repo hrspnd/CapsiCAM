@@ -2,9 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../constants.dart';
 import '../l10n/app_localizations.dart';
 import 'package:thesis_app/models/scan_result.dart';
+import 'package:thesis_app/services/supabase_service.dart';
 import 'history_result_screen.dart';
 
 // ============================================================
@@ -20,48 +22,91 @@ class ScanHistoryScreen extends StatefulWidget {
 
 class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
   // ── Supabase data ─────────────────────────────────────────
-  // TODO: Replace with real data from Supabase
-  // services/supabase_service.dart → fetchAllScans()
+  final _supabaseService = SupabaseService();
 
-  final List<ScanResult> _scans = [
-    ScanResult(
-      id: '1',
-      disease: 'Bacterial_Leaf_Spot',
-      imageSource: AppConstants.sourceScanned,
-      date: 'Apr 24, 2026',
-      confidence: 0.91,
-    ),
-    ScanResult(
-      id: '2',
-      disease: 'Healthy',
-      imageSource: AppConstants.sourceUploaded,
-      date: 'Apr 24, 2026',
-      confidence: 0.97,
-    ),
-    ScanResult(
-      id: '3',
-      disease: 'Cercospora_Leaf_Spot',
-      imageSource: AppConstants.sourceUploaded,
-      date: 'Apr 24, 2026',
-      confidence: 0.81,
-    ),
-    ScanResult(
-      id: '4',
-      disease: 'Bacterial_Leaf_Spot',
-      imageSource: AppConstants.sourceScanned,
-      date: 'Apr 23, 2026',
-      confidence: 0.88,
-    ),
-    ScanResult(
-      id: '5',
-      disease: 'Healthy',
-      imageSource: AppConstants.sourceScanned,
-      date: 'Apr 21, 2026',
-      confidence: 0.95,
-    ),
-  ];
+  List<ScanResult> _scans = const [];
+
+  bool _isLoading = true;
+  bool _isOffline = false;
+  String? _errorMessage;
 
   int _currentNavIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  // ── Row → ScanResult mapping ────────────────────────────────
+  // Mirrors dashboard_screen.dart's _scanFromRow. Kept in sync
+  // manually for now — if these two ever drift, pull this into a
+  // shared mapper (e.g. models/scan_result.dart) instead.
+
+  static const Map<String, String> _diseaseDisplayKeys = {
+    'healthy': 'Healthy',
+    'bacterial_leaf_spot': 'Bacterial_Leaf_Spot',
+    'cercospora_leaf_spot': 'Cercospora_Leaf_Spot',
+  };
+
+  ScanResult _scanFromRow(Map<String, dynamic> row) {
+    final classification = row['classification'] as String;
+
+    double confidence;
+    switch (classification) {
+      case 'healthy':
+        confidence = (row['confidence_healthy'] as num).toDouble();
+        break;
+      case 'bacterial_leaf_spot':
+        confidence = (row['confidence_bls'] as num).toDouble();
+        break;
+      case 'cercospora_leaf_spot':
+        confidence = (row['confidence_cls'] as num).toDouble();
+        break;
+      default:
+        confidence = 0.0;
+    }
+
+    final scannedAt = DateTime.parse(row['scanned_at'] as String).toLocal();
+
+    return ScanResult(
+      id: row['id'] as String,
+      disease: _diseaseDisplayKeys[classification] ?? classification,
+      imageSource: row['image_source'] == 'captured'
+          ? AppConstants.sourceScanned
+          : AppConstants.sourceUploaded,
+      date: DateFormat('MMM d, yyyy').format(scannedAt),
+      confidence: confidence,
+      imagePath: row['image_url'] as String?,
+    );
+  }
+
+  Future<void> _loadHistory() async {
+    setState(() {
+      _isLoading = true;
+      _isOffline = false;
+      _errorMessage = null;
+    });
+
+    try {
+      final rows = await _supabaseService.fetchAllScans();
+      if (!mounted) return;
+      setState(() {
+        _scans = rows.map(_scanFromRow).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final isOffline = e.toString().contains('offline');
+      setState(() {
+        _isLoading = false;
+        _isOffline = isOffline;
+        _errorMessage = isOffline
+            ? "You're offline. Showing what we could load."
+            : "Couldn't load your scan history. Pull down or tap retry.";
+      });
+    }
+  }
 
   void _onNavTap(int index) {
     if (index == _currentNavIndex) return;
@@ -80,8 +125,6 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
 
   void _onClearHistory() {
     final l10n = AppLocalizations.of(context)!;
-    // TODO: Call Supabase → supabase_service.dart → clearScanHistory()
-    // TODO: On success → setState(() => _scans.clear())
     showDialog(
       context: context,
       builder: (ctx) {
@@ -119,9 +162,21 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(ctx).pop();
-                setState(() => _scans.clear());
+                final previousScans = _scans;
+                setState(() => _scans = const []); // optimistic
+                try {
+                  await _supabaseService.clearScanHistory();
+                } catch (e) {
+                  if (!mounted) return;
+                  setState(() => _scans = previousScans); // roll back
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Could not clear history: $e'),
+                    ),
+                  );
+                }
               },
               child: Text(
                 l10n.clearHistoryConfirmButton,
@@ -148,10 +203,28 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
       body: Column(
         children: [
           _buildHeader(colors, l10n),
+          if (_errorMessage != null)
+            Container(
+              width: double.infinity,
+              color: _isOffline ? colors.surfaceGray : colors.dangerBg,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.sm,
+              ),
+              child: Text(
+                _errorMessage!,
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
+              ),
+            ),
           Expanded(
-            child: _scans.isEmpty
-                ? _buildEmptyState(colors)
-                : _buildScanList(colors, l10n),
+            child: RefreshIndicator(
+              onRefresh: _loadHistory,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _scans.isEmpty
+                      ? _buildEmptyState(colors)
+                      : _buildScanList(colors, l10n),
+            ),
           ),
           _buildBottomNav(colors),
         ],
@@ -287,8 +360,13 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
 
   Widget _buildEmptyState(AppColors colors) {
     final l10n   = AppLocalizations.of(context)!;
-    return Center(
-      child: Padding(
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(
+        child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -323,6 +401,9 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
               ),
             ),
           ],
+        ),
+      ),
+          ),
         ),
       ),
     );
@@ -414,7 +495,28 @@ class _ScanItem extends StatelessWidget {
               child: scan.imagePath != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Image.asset(scan.imagePath!, fit: BoxFit.cover),
+                      child: Image.network(
+                        scan.imagePath!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.eco_outlined,
+                          color: colors.forDisease(scan.disease),
+                          size: 24,
+                        ),
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return Center(
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colors.primary,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     )
                   : Icon(
                       Icons.eco_outlined,
