@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants.dart';
+import 'package:thesis_app/services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ============================================================
 // LOGIN SCREEN
@@ -67,11 +69,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      // TODO: Call Supabase auth → supabase_service.dart → signInWithEmail()
-      // TODO: On success → context.go(AppRoutes.dashboard)
-      await Future.delayed(const Duration(seconds: 1)); // placeholder
-      
-    } on Exception catch (e) {
+      await SupabaseService().signInWithEmail(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+      context.go(AppRoutes.dashboard);
+    } on AuthException catch (e) {
+      debugPrint('AuthException during login: ${e.message}');
+      _handleSupabaseError(e.message);
+    } catch (e, stackTrace) {
+      debugPrint('Unexpected error during login: $e');
+      debugPrint('$stackTrace');
       _handleSupabaseError(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);

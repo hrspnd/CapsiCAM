@@ -1,5 +1,6 @@
 // scan_results_screen.dart
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../constants.dart';
@@ -97,8 +98,8 @@ class ScanResultsScreen extends StatelessWidget {
           backgroundColor: colors.textBlack,
           body: Center(
             child: InteractiveViewer(
-              child: Image.asset(
-                args.imagePath,
+              child: Image.file(
+                File(args.imagePath),
                 fit: BoxFit.contain,
                 width: double.infinity,
               ),
@@ -133,8 +134,8 @@ class ScanResultsScreen extends StatelessWidget {
           backgroundColor: colors.textBlack,
           body: Center(
             child: InteractiveViewer(
-              child: Image.asset(
-                args.heatmapPath!,
+              child: Image.file(
+                File(args.heatmapPath!),
                 fit: BoxFit.contain,
                 width: double.infinity,
               ),
@@ -231,8 +232,8 @@ class ScanResultsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.xl),
         child: AspectRatio(
           aspectRatio: 1 / 1,
-          child: Image.asset(
-            args.imagePath,
+          child: Image.file(
+            File(args.imagePath),
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(
               color: colors.surfaceGray,
@@ -348,8 +349,8 @@ class ScanResultsScreen extends StatelessWidget {
                         child: AspectRatio(
                           aspectRatio: 1 / 1,
                           child: args.heatmapPath != null
-                              ? Image.asset(
-                                  args.heatmapPath!,
+                              ? Image.file(
+                                  File(args.heatmapPath!),
                                   fit: BoxFit.cover,
                                   width: double.infinity,
                                   errorBuilder: (_, __, ___) =>

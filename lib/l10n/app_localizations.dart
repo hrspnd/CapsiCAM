@@ -209,7 +209,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountCreated.
   ///
   /// In en, this message translates to:
-  /// **'Account created! Please check your email to verify your account.'**
+  /// **'Account created successfully!'**
   String get accountCreated;
 
   /// No description provided for @welcomeBack.
@@ -449,7 +449,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutMsg.
   ///
   /// In en, this message translates to:
-  /// **'____ is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0'**
+  /// **'CapsiCAM is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0'**
   String get aboutMsg;
 
   /// No description provided for @helpSupport.

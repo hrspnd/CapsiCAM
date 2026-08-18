@@ -63,8 +63,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signUpButton => 'Sign Up';
 
   @override
-  String get accountCreated =>
-      'Account created! Please check your email to verify your account.';
+  String get accountCreated => 'Account created successfully!';
 
   @override
   String get welcomeBack => 'Welcome back,';
@@ -188,7 +187,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutMsg =>
-      '____ is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0';
+      'CapsiCAM is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0';
 
   @override
   String get helpSupport => 'Help & Support';

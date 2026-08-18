@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants.dart';
 import '../../l10n/app_localizations.dart';
+import 'package:thesis_app/services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ============================================================
 // SIGN UP SCREEN
@@ -17,14 +19,14 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final _emailController           = TextEditingController();
-  final _displayNameController     = TextEditingController();
-  final _passwordController        = TextEditingController();
+  final _emailController = TextEditingController();
+  final _displayNameController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  bool _obscurePassword        = true;
+  bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _isLoading              = false;
+  bool _isLoading = false;
 
   // ── Error state ───────────────────────────────────────────
   String? _displayNameError;
@@ -33,7 +35,7 @@ class _SignupScreenState extends State<SignupScreen> {
   String? _confirmPasswordError;
 
   static const int _minDisplayNameLength = 2;
-  static const int _minPasswordLength    = 8;
+  static const int _minPasswordLength = 8;
 
   @override
   void dispose() {
@@ -47,10 +49,10 @@ class _SignupScreenState extends State<SignupScreen> {
   // ── Validation ────────────────────────────────────────────
 
   bool _validate() {
-    final l10n            = AppLocalizations.of(context)!;
-    final displayName     = _displayNameController.text.trim();
-    final email           = _emailController.text.trim();
-    final password        = _passwordController.text;
+    final l10n = AppLocalizations.of(context)!;
+    final displayName = _displayNameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
     String? displayNameErr;
@@ -87,9 +89,9 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     setState(() {
-      _displayNameError     = displayNameErr;
-      _emailError           = emailErr;
-      _passwordError        = passwordErr;
+      _displayNameError = displayNameErr;
+      _emailError = emailErr;
+      _passwordError = passwordErr;
       _confirmPasswordError = confirmPasswordErr;
     });
 
@@ -106,16 +108,23 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _isLoading = true);
     try {
-      // TODO: Call Supabase auth → supabase_service.dart → signUpWithEmail()
-      // TODO: On success → show success banner, then context.go(AppRoutes.login)
-      await Future.delayed(const Duration(seconds: 1)); // placeholder
+      await SupabaseService().signUpWithEmail(
+        fullName: _displayNameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
       if (!mounted) return;
       _showSuccessBanner();
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
-      context.go(AppRoutes.login);
-    } on Exception catch (e) {
+      context.go(AppRoutes.dashboard);
+    } on AuthException catch (e) {
+      debugPrint('AuthException during signup: ${e.message}');
+      _handleSupabaseError(e.message);
+    } catch (e, stackTrace) {
+      debugPrint('Unexpected error during signup: $e');
+      debugPrint('$stackTrace');
       _handleSupabaseError(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -123,34 +132,45 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _showSuccessBanner() {
-    final colors = AppColors.of(context);
-    final l10n   = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showMaterialBanner(
-      MaterialBanner(
+  final colors = AppColors.of(context);
+  final l10n   = AppLocalizations.of(context)!;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
         backgroundColor: colors.primaryLightest,
-        leading: Icon(Icons.check_circle_outline, color: colors.primaryDark),
-        content: Text(
-          l10n.accountCreated,
-          style: TextStyle(
-            fontSize: 13,
-            color: colors.primaryDarker,
-            fontFamily: 'Onest',
-          ),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          left: AppSpacing.md,
+          right: AppSpacing.md,
+          bottom:
+              MediaQuery.of(context).padding.bottom +
+              70, // ← lifts it above the bottom nav
         ),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                ScaffoldMessenger.of(context).hideCurrentMaterialBanner(),
-            child: Text(
-              'OK',
-              style: TextStyle(
-                color: colors.primaryDark,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Onest',
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        duration: const Duration(seconds: 3),
+        content: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: colors.primaryDark),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              // ← this is what prevents overflow on long text
+              child: Text(
+                l10n.accountCreated,
+                style: TextStyle(
+                  color: colors.primaryDarker,
+                  fontFamily: 'Onest',
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: colors.primaryDark,
+          onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+        ),
       ),
     );
   }
@@ -165,6 +185,9 @@ class _SignupScreenState extends State<SignupScreen> {
         message.contains('User already registered') ||
         message.contains('email_exists')) {
       emailErr = l10n.errorEmailInUse;
+    } else if (message.contains('rate limit') ||
+        message.contains('over_email_send_rate_limit')) {
+      passwordErr = l10n.errorTooManyAttempts;
     } else if (message.contains('network') ||
         message.contains('SocketException') ||
         message.contains('connection')) {
@@ -174,7 +197,7 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     setState(() {
-      _emailError    = emailErr;
+      _emailError = emailErr;
       _passwordError = passwordErr;
     });
   }
@@ -188,7 +211,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final l10n   = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -403,23 +426,24 @@ class _SignupScreenState extends State<SignupScreen> {
           onChanged: (_) {
             if (_passwordError != null) setState(() => _passwordError = null);
           },
-          decoration: _inputDecoration(
-            colors,
-            hint: l10n.passwordHint,
-            errorText: _passwordError,
-          ).copyWith(
-            suffixIcon: GestureDetector(
-              onTap: () =>
-                  setState(() => _obscurePassword = !_obscurePassword),
-              child: Icon(
-                _obscurePassword
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: colors.textSecondary,
-                size: 20,
+          decoration:
+              _inputDecoration(
+                colors,
+                hint: l10n.passwordHint,
+                errorText: _passwordError,
+              ).copyWith(
+                suffixIcon: GestureDetector(
+                  onTap: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
+                  child: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: colors.textSecondary,
+                    size: 20,
+                  ),
+                ),
               ),
-            ),
-          ),
         ),
         if (_passwordError != null) ...[
           const SizedBox(height: 1),
@@ -465,23 +489,25 @@ class _SignupScreenState extends State<SignupScreen> {
               setState(() => _confirmPasswordError = null);
             }
           },
-          decoration: _inputDecoration(
-            colors,
-            hint: l10n.confirmPasswordHint,
-            errorText: _confirmPasswordError,
-          ).copyWith(
-            suffixIcon: GestureDetector(
-              onTap: () => setState(
-                  () => _obscureConfirmPassword = !_obscureConfirmPassword),
-              child: Icon(
-                _obscureConfirmPassword
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: colors.textSecondary,
-                size: 20,
+          decoration:
+              _inputDecoration(
+                colors,
+                hint: l10n.confirmPasswordHint,
+                errorText: _confirmPasswordError,
+              ).copyWith(
+                suffixIcon: GestureDetector(
+                  onTap: () => setState(
+                    () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                  ),
+                  child: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: colors.textSecondary,
+                    size: 20,
+                  ),
+                ),
               ),
-            ),
-          ),
         ),
         if (_confirmPasswordError != null) ...[
           const SizedBox(height: 1),
@@ -512,8 +538,7 @@ class _SignupScreenState extends State<SignupScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: colors.buttonBg,
           foregroundColor: colors.textWhite,
-          disabledBackgroundColor:
-              colors.primaryDark.withValues(alpha: 0.6),
+          disabledBackgroundColor: colors.primaryDark.withValues(alpha: 0.6),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),

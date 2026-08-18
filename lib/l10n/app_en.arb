@@ -20,7 +20,7 @@
   "loginHere": "Login here",
   "signUpWithGoogle": "Sign Up with Google",
   "signUpButton": "Sign Up",
-  "accountCreated": "Account created! Please check your email to verify your account.",
+  "accountCreated": "Account created successfully!",
 
   "welcomeBack": "Welcome back,",
   "recentScans": "Recent Scans",
@@ -66,7 +66,7 @@
   "languageLabel": "Language",
   "aboutLabel": "About",
   "aboutAppLabel": "About the App",
-  "aboutMsg": "____ is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0",
+  "aboutMsg": "CapsiCAM is a chili pepper leaf disease classification app developed as part of an undergraduate thesis study.\n\nVersion 1.0.0",
   "helpSupport": "Help & Support",
   "helpSupportmsg": "For questions or issues, please contact your system administrator or refer to the thesis documentation.",
   "logOut": "Log out",

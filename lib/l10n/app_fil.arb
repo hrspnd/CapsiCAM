@@ -20,7 +20,7 @@
   "loginHere": "Mag-log in dito",
   "signUpWithGoogle": "Mag-sign up gamit ang Google",
   "signUpButton": "Sign Up",
-  "accountCreated": "Nagawa na ang account! Pakitingnan ang iyong email para ma-verify ang iyong account.",
+  "accountCreated": "Nagawa na ang account!",
 
   "welcomeBack": "Kamusta,",
   "recentScans": "Mga Huling Scan",
@@ -64,9 +64,9 @@
   "languageLabel": "Lengguwahe",
   "aboutLabel": "Tungkol",
   "aboutAppLabel": "Tungkol sa App",
-  "aboutMsg": "dahon tungkol yes yes yes (placeholder)",
+  "aboutMsg": "Ang CapsiCAM ay isang aplikasyon para sa pag-uuri ng sakit ng dahon ng sili, na binuo bilang bahagi ng isang undergraduate thesis study.\n\nBersyon 1.0.0",
   "helpSupport": "Tulong at Suporta",
-  "helpSupportmsg": "tulong pls (placeholder)",
+  "helpSupportmsg": "Para sa mga katanungan o isyu, mangyaring makipag-ugnayan sa inyong system administrator o sumangguni sa dokumentasyon ng thesis.",
   "logOut": "Mag-log out",
   "logOutSure": "Sigurado ka bang gusto mong mag-log out?",
 

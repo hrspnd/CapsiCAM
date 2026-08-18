@@ -4,8 +4,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img;
 import '../constants.dart';
 import '../l10n/app_localizations.dart';
+import '../services/disease_classifier_service.dart';
+import 'scan_results_screen.dart'; // for ScanResultsArgs
+
+// Add path_provider if not already present:
+//   flutter pub add path_provider
 
 // ============================================================
 // CAPTURE IMAGE SCREEN
@@ -23,6 +30,19 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
   File? _selectedImage;
   final _picker = ImagePicker();
 
+  final _classifier = DiseaseClassifierService();
+  bool _isAnalyzing = false;
+
+  // Translates the model's raw output class names to the exact strings
+  // AppConstants.classNames / the rest of the app already uses. Keeping
+  // this mapping in one place means constants.dart doesn't need to change,
+  // and every other screen that relies on those exact strings is unaffected.
+  static const Map<String, String> _modelToAppClassName = {
+    'Bacterial_Spot': 'Bacterial_Leaf_Spot',
+    'Cercospora_Leaf_Spot': 'Cercospora_Leaf_Spot',
+    'Healthy_Leaf': 'Healthy',
+  };
+
   static const _tipSeenKey = 'capture_tips_seen';
 
   // ── Lifecycle ─────────────────────────────────────────────
@@ -32,6 +52,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
     super.initState();
     // WidgetsBinding.instance.addPostFrameCallback((_) => _showTipsIfFirstTime()); //temporary -- uncomment later
     WidgetsBinding.instance.addPostFrameCallback((_) => _showTipsDialog());
+    _classifier.loadModel();
   }
 
   //TEMPORARY (UNCOMMENT PAG GAGAWIN NA FIRST TIME YUNG TIPS)
@@ -61,7 +82,13 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
       imageQuality: 90,
     );
     if (image != null) {
-      setState(() => _selectedImage = File(image.path));
+      final file = File(image.path);
+      debugPrint(
+        'picked path: ${image.path}, exists: ${await file.exists()}, size: ${await file.length()}',
+      );
+      if (mounted) {
+        setState(() => _selectedImage = file);
+      }
     }
   }
 
@@ -70,15 +97,65 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
       source: ImageSource.gallery,
       imageQuality: 90,
     );
-    if (image != null) {
+    if (image != null && mounted) {
       setState(() => _selectedImage = File(image.path));
     }
   }
 
-  void _onAnalyze() {
-    if (_selectedImage == null) return;
-    // TODO: Run TFLite inference on _selectedImage
-    // TODO: context.push(AppRoutes.scanResults, extra: {...});
+  Future<void> _onAnalyze() async {
+    if (_selectedImage == null || _isAnalyzing) return;
+
+    setState(() => _isAnalyzing = true);
+
+    try {
+      await _classifier.loadModel(); // no-op if already loaded
+
+      final result = await _classifier.classify(_selectedImage!);
+
+      // Translate model output names -> app's existing naming convention
+      final translatedLabel =
+          _modelToAppClassName[result.predictedClass] ?? result.predictedClass;
+      final translatedPredictions = <String, double>{
+        for (final entry in result.confidenceByClass.entries)
+          (_modelToAppClassName[entry.key] ?? entry.key): entry.value,
+      };
+
+      // Save the heatmap overlay to a real file, since ScanResultsScreen
+      // needs a file path (see Image.file fix noted separately)
+      final heatmapPath = await _saveHeatmapToFile(result.heatmapOverlay);
+
+      final args = ScanResultsArgs(
+        imagePath: _selectedImage!.path,
+        label: translatedLabel,
+        confidence: result.confidence,
+        predictions: translatedPredictions,
+        source: AppConstants
+            .sourceScanned, // adjust per capture vs gallery if tracked separately
+        date: DateTime.now(),
+        heatmapPath: heatmapPath,
+      );
+
+      if (!mounted) return;
+      context.push(AppRoutes.scanResults, extra: args);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Analysis failed: $e')));
+    } finally {
+      if (mounted) setState(() => _isAnalyzing = false);
+    }
+  }
+
+  /// Saves the CAM heatmap overlay (in-memory img.Image) to a temp file
+  /// so it has a real file path, same as the original scanned image.
+  Future<String> _saveHeatmapToFile(img.Image heatmap) async {
+    final dir = await getTemporaryDirectory();
+    final path =
+        '${dir.path}/heatmap_${DateTime.now().millisecondsSinceEpoch}.png';
+    final bytes = img.encodePng(heatmap);
+    await File(path).writeAsBytes(bytes);
+    return path;
   }
 
   void _onBack() => context.pop();
@@ -179,7 +256,11 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
         child: AspectRatio(
           aspectRatio: 3 / 4,
           child: _selectedImage != null
-              ? Image.file(_selectedImage!, fit: BoxFit.cover)
+              ? Image.file(
+                  _selectedImage!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildEmptyPreview(colors),
+                )
               : _buildEmptyPreview(colors),
         ),
       ),
@@ -368,7 +449,9 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
         width: double.infinity,
         height: 50,
         child: ElevatedButton(
-          onPressed: _selectedImage != null ? _onAnalyze : null,
+          onPressed: (_selectedImage != null && !_isAnalyzing)
+              ? _onAnalyze
+              : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: colors.buttonBg,
             foregroundColor: colors.textWhite,
@@ -378,18 +461,35 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
               borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
           ),
-          child: Text(
-            l10n.analyzeButton,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Onest',
-              color: colors.textWhite,
-            ),
-          ),
+          child: _isAnalyzing
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  l10n.analyzeButton,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Onest',
+                    color: colors.textWhite,
+                  ),
+                ),
         ),
       ),
     );
+  }
+
+  // ── Lifecycle: dispose ────────────────────────────────────
+
+  @override
+  void dispose() {
+    _classifier.dispose();
+    super.dispose();
   }
 }
 

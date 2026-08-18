@@ -6,6 +6,7 @@ import '../../constants.dart';
 import '../../theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:thesis_app/l10n/app_localizations.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -392,12 +393,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Sign out from Supabase then navigate to login
-              // await Supabase.instance.client.auth.signOut();
-              // context.go(AppRoutes.login);
-            },
+            onPressed: () => _onLogOut(context),
             child: Text(
               'Log Out',
               style: TextStyle(
@@ -409,6 +405,23 @@ class _AccountScreenState extends State<AccountScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _onLogOut(BuildContext dialogContext) async {
+    // Close the confirmation dialog first.
+    Navigator.pop(dialogContext);
+
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (e, stackTrace) {
+      debugPrint('Error during logout: $e');
+      debugPrint('$stackTrace');
+      // Even if sign-out errors (e.g. no network), still send the user
+      // to the login screen — there's nothing useful to keep them here for.
+    }
+
+    if (!mounted) return;
+    context.go(AppRoutes.login);
   }
 
   // ── UI ────────────────────────────────────────────────────
@@ -650,6 +663,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   // ── Bottom nav ────────────────────────────────────────────
+  
   Widget _buildBottomNav(AppColors colors) {
     return Container(
       color: colors.primary,

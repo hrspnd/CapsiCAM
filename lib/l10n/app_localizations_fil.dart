@@ -63,8 +63,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get signUpButton => 'Sign Up';
 
   @override
-  String get accountCreated =>
-      'Nagawa na ang account! Pakitingnan ang iyong email para ma-verify ang iyong account.';
+  String get accountCreated => 'Nagawa na ang account!';
 
   @override
   String get welcomeBack => 'Kamusta,';
@@ -189,13 +188,15 @@ class AppLocalizationsFil extends AppLocalizations {
   String get aboutAppLabel => 'Tungkol sa App';
 
   @override
-  String get aboutMsg => 'dahon tungkol yes yes yes (placeholder)';
+  String get aboutMsg =>
+      'Ang CapsiCAM ay isang aplikasyon para sa pag-uuri ng sakit ng dahon ng sili, na binuo bilang bahagi ng isang undergraduate thesis study.\n\nBersyon 1.0.0';
 
   @override
   String get helpSupport => 'Tulong at Suporta';
 
   @override
-  String get helpSupportmsg => 'tulong pls (placeholder)';
+  String get helpSupportmsg =>
+      'Para sa mga katanungan o isyu, mangyaring makipag-ugnayan sa inyong system administrator o sumangguni sa dokumentasyon ng thesis.';
 
   @override
   String get logOut => 'Mag-log out';

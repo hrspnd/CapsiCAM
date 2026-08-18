@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
@@ -14,7 +16,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/scan_history_screen.dart';
 import 'screens/account/account_screen.dart';
 import 'screens/account/my_account_screen.dart';
-import 'screens/live_scan_screen.dart';
+// import 'screens/live_scan_screen.dart';
 import 'screens/capture_image_screen.dart';
 import 'screens/scan_results_screen.dart';
 import 'screens/history_result_screen.dart';
@@ -52,12 +54,52 @@ class _AppWithTheme extends StatelessWidget {
 // ROUTER
 // ============================================================
 
-final _router = GoRouter(
-  // TODO: Change to AppRoutes.login when auth is ready
+/// Bridges a Stream (Supabase's auth state changes) into a Listenable
+/// that GoRouter can watch, so `redirect` re-runs whenever the user
+/// logs in or out — not just when a navigation is manually triggered.
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+      (_) => notifyListeners(),
+    );
+  }
 
-  // CHANGE INITIAL SCREEN LOCATION
-  initialLocation: AppRoutes.login, // JOSIE
-  // initialLocation: AppRoutes.myAccount, // YAM
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+// Routes reachable without a logged-in session.
+const _authRoutes = {AppRoutes.login, AppRoutes.signup};
+
+final _router = GoRouter(
+  initialLocation: AppRoutes.login,
+  refreshListenable: GoRouterRefreshStream(
+    Supabase.instance.client.auth.onAuthStateChange,
+  ),
+  redirect: (context, state) {
+    final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
+    final isAuthRoute = _authRoutes.contains(state.matchedLocation);
+
+    // Not logged in and trying to reach a protected screen → send to login.
+    if (!isLoggedIn && !isAuthRoute) {
+      return AppRoutes.login;
+    }
+
+    // Already logged in but sitting on login/signup (e.g. pressed back) →
+    // send to dashboard instead.
+    if (isLoggedIn && isAuthRoute) {
+      return AppRoutes.dashboard;
+    }
+
+    // No redirect needed.
+    return null;
+  },
   routes: [
     GoRoute(
       path: AppRoutes.login,
@@ -83,10 +125,10 @@ final _router = GoRouter(
       path: AppRoutes.myAccount,
       builder: (context, state) => const MyAccountScreen(),
     ),
-    GoRoute(
-      path: AppRoutes.liveScan,
-      builder: (context, state) => const LiveScanScreen(),
-    ),
+    // GoRoute(
+    //   path: AppRoutes.liveScan,
+    //   builder: (context, state) => const LiveScanScreen(),
+    // ),
     GoRoute(
       path: AppRoutes.captureImage,
       builder: (context, state) => const CaptureImageScreen(),

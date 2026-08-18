@@ -56,7 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _onNavTap(int index) {
     if (index == _currentNavIndex) return;
-    setState(() => _currentNavIndex = index);
+    // setState(() => _currentNavIndex = index);
     switch (index) {
       case 0:
         context.push(AppRoutes.scanHistory);
@@ -104,7 +104,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          _buildBottomNav(colors, l10n),
+          _buildBottomNav(colors),
         ],
       ),
     );
@@ -175,28 +175,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ── Action buttons ────────────────────────────────────────
 
   Widget _buildActionButtons(AppColors colors, AppLocalizations l10n) {
-    return Row(
-      children: [
-        Expanded(
-          child: _ActionButton(
-            label: 'Live Camera',
-            sublabel: 'Real-time scan',
-            iconPath: AppAssets.liveCameraIcon,
-            colors: colors,
-            onTap: () => context.push(AppRoutes.liveScan),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: _ActionButton(
-            label: 'Capture Image',
-            sublabel: 'Capture or upload',
-            iconPath: AppAssets.captureImageIcon,
-            colors: colors,
-            onTap: () => context.push(AppRoutes.captureImage),
-          ),
-        ),
-      ],
+    return _ActionButton(
+      label: 'Capture Image',
+      sublabel: 'Capture or upload image to scan',
+      iconPath: AppAssets.liveCameraIcon,
+      colors: colors,
+      onTap: () => context.push(AppRoutes.captureImage),
     );
   }
 
@@ -335,7 +319,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // ── Bottom nav ────────────────────────────────────────────
 
-  Widget _buildBottomNav(AppColors colors, AppLocalizations l10n) {
+  Widget _buildBottomNav(AppColors colors) {
     return Container(
       color: colors.primary,
       padding: EdgeInsets.only(
@@ -347,7 +331,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           _NavItem(
             iconPath: AppAssets.historyIcon,
-            label: l10n.scanHistoryTitle,
+            label: 'History',
             isActive: _currentNavIndex == 0,
             onTap: () => _onNavTap(0),
           ),
@@ -395,6 +379,7 @@ class _ActionButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: colors.surface,
@@ -408,32 +393,40 @@ class _ActionButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
             Image.asset(
               iconPath,
-              width: 40,
-              height: 40,
+              width: 56,
+              height: 56,
               errorBuilder: (_, __, ___) => Icon(
                 Icons.camera_alt_outlined,
-                size: 40,
+                size: 56,
                 color: colors.primaryDark,
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  // const SizedBox(height: 2),
+                  Text(
+                    sublabel,
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                  ),
+                ],
               ),
             ),
-            Text(
-              sublabel,
-              style: TextStyle(fontSize: 11, color: colors.textSecondary),
-            ),
+            Icon(Icons.chevron_right, color: colors.chevron, size: 22),
           ],
         ),
       ),
