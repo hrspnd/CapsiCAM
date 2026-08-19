@@ -218,6 +218,36 @@ abstract class AppLocalizations {
   /// **'Welcome back,'**
   String get welcomeBack;
 
+  /// No description provided for @captureImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture Image'**
+  String get captureImage;
+
+  /// No description provided for @captureUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture or upload image to scan'**
+  String get captureUpload;
+
+  /// No description provided for @totalScans.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Scans'**
+  String get totalScans;
+
+  /// No description provided for @totalHealthy.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Healthy'**
+  String get totalHealthy;
+
+  /// No description provided for @mostFrequent.
+  ///
+  /// In en, this message translates to:
+  /// **'Most Frequent'**
+  String get mostFrequent;
+
   /// No description provided for @recentScans.
   ///
   /// In en, this message translates to:
@@ -427,6 +457,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Got it'**
   String get gotIt;
+
+  /// No description provided for @appSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'App Settings'**
+  String get appSettings;
+
+  /// No description provided for @displayMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Display Mode'**
+  String get displayMode;
 
   /// No description provided for @languageLabel.
   ///

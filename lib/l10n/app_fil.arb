@@ -23,12 +23,17 @@
   "accountCreated": "Nagawa na ang account!",
 
   "welcomeBack": "Kamusta,",
+  "captureImage" : "Kumuha ng Larawan",
+  "captureUpload": "Kunan o mag-upload ng larawan para i-scan",
+  "totalScans": "Total na Scan",
+  "totalHealthy": "Total na Healthy",
+  "mostFrequent": "Pinakamadalas",
   "recentScans": "Mga Huling Scan",
   "viewAll": "Tingnan Lahat",
   "scanHistoryEmpty": "Ang iyong kasaysayan ng pag-scan ay lilitaw dito.\nPindutin ang isang button sa itaas para magsimula.",
 
   "scanHistoryTitle": "Scan History",
-  "sourceScanned": "Na-scan",
+  "sourceScanned": "Na-capture",
   "sourceUploaded": "Na-upload",
   "clearHistoryButton": "I-clear ang History",
   "clearHistoryConfirm": "Burahin ang lahat ng scan history? Hindi na ito mababawi.",
@@ -61,6 +66,8 @@
   "tip4": "I-scan nang isa-isa ang mga dahon para sa pinakamaayos na resulta",
   "gotIt": "Sige",
 
+  "appSettings": "Settings ng App",
+  "displayMode": "Mode ng Display",
   "languageLabel": "Lengguwahe",
   "aboutLabel": "Tungkol",
   "aboutAppLabel": "Tungkol sa App",

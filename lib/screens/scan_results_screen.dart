@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../constants.dart';
 import '../l10n/app_localizations.dart';
+import 'package:thesis_app/services/scan_refresh_bus.dart';
 
 // ============================================================
 // SCAN RESULTS SCREEN
@@ -82,9 +83,18 @@ class ScanResultsScreen extends StatelessWidget {
 
   String get _displayLabel => args.label.replaceAll('_', ' ');
 
-  void _onBack(BuildContext context) => context.pop();
+  void _onBack(BuildContext context) {
+    // A scan was just saved for this screen to show, so let the
+    // dashboard know to refresh its recent scans whenever it's
+    // next visible, however far back it sits in the stack.
+    ScanRefreshBus.notify();
+    context.pop();
+  }
 
-  void _onBackToHome(BuildContext context) => context.go(AppRoutes.dashboard);
+  void _onBackToHome(BuildContext context) {
+    ScanRefreshBus.notify();
+    context.go(AppRoutes.dashboard);
+  }
 
   void _showFullImage(BuildContext context, AppColors colors) {
     showDialog(

@@ -23,6 +23,11 @@
   "accountCreated": "Account created successfully!",
 
   "welcomeBack": "Welcome back,",
+  "captureImage" : "Capture Image",
+  "captureUpload": "Capture or upload image to scan",
+  "totalScans": "Total Scans",
+  "totalHealthy": "Total Healthy",
+  "mostFrequent": "Most Frequent",
   "recentScans": "Recent Scans",
   "viewAll": "View All",
   "scanHistoryEmpty": "Your scan history will appear here.\nTap a button above to get started.",
@@ -63,6 +68,8 @@
   "tip4": "Scan a single leaf at a time for accurate results",
   "gotIt": "Got it",
 
+  "appSettings": "App Settings",
+  "displayMode": "Display Mode",
   "languageLabel": "Language",
   "aboutLabel": "About",
   "aboutAppLabel": "About the App",

@@ -69,6 +69,21 @@ class AppLocalizationsFil extends AppLocalizations {
   String get welcomeBack => 'Kamusta,';
 
   @override
+  String get captureImage => 'Kumuha ng Larawan';
+
+  @override
+  String get captureUpload => 'Kunan o mag-upload ng larawan para i-scan';
+
+  @override
+  String get totalScans => 'Total na Scan';
+
+  @override
+  String get totalHealthy => 'Total na Healthy';
+
+  @override
+  String get mostFrequent => 'Pinakamadalas';
+
+  @override
   String get recentScans => 'Mga Huling Scan';
 
   @override
@@ -82,7 +97,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get scanHistoryTitle => 'Scan History';
 
   @override
-  String get sourceScanned => 'Na-scan';
+  String get sourceScanned => 'Na-capture';
 
   @override
   String get sourceUploaded => 'Na-upload';
@@ -177,6 +192,12 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get gotIt => 'Sige';
+
+  @override
+  String get appSettings => 'Settings ng App';
+
+  @override
+  String get displayMode => 'Mode ng Display';
 
   @override
   String get languageLabel => 'Lengguwahe';

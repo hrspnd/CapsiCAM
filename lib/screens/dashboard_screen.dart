@@ -7,6 +7,7 @@ import '../constants.dart';
 import '../l10n/app_localizations.dart';
 import 'package:thesis_app/models/scan_result.dart';
 import 'package:thesis_app/services/supabase_service.dart';
+import 'package:thesis_app/services/scan_refresh_bus.dart';
 
 // ============================================================
 // DASHBOARD SCREEN
@@ -38,6 +39,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _loadDashboard();
+    ScanRefreshBus.listenable.addListener(_onScanRefreshSignal);
+  }
+
+  @override
+  void dispose() {
+    ScanRefreshBus.listenable.removeListener(_onScanRefreshSignal);
+    super.dispose();
+  }
+
+  void _onScanRefreshSignal() {
+    if (!mounted) return;
     _loadDashboard();
   }
 
@@ -156,28 +169,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           _buildHeader(colors, l10n),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(
-                top: AppSpacing.xxl,
-                left: AppSpacing.lg,
-                right: AppSpacing.lg,
-                bottom: AppSpacing.lg,
-              ),
+            child: RefreshIndicator(
+              onRefresh: _loadDashboard,
+              color: colors.primary,
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (_errorMessage != null) ...[
-                          _buildStatusBanner(colors),
-                          const SizedBox(height: AppSpacing.md),
-                        ],
-                        _buildActionButtons(colors, l10n),
-                        const SizedBox(height: AppSpacing.md),
-                        _buildStatCards(colors, l10n),
-                        const SizedBox(height: AppSpacing.lg),
-                        _buildRecentScansSection(colors, l10n),
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [
+                        SizedBox(height: 200),
+                        Center(child: CircularProgressIndicator()),
                       ],
+                    )
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(
+                        top: AppSpacing.xxl,
+                        left: AppSpacing.lg,
+                        right: AppSpacing.lg,
+                        bottom: AppSpacing.lg,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_errorMessage != null) ...[
+                            _buildStatusBanner(colors),
+                            const SizedBox(height: AppSpacing.md),
+                          ],
+                          _buildActionButtons(colors, l10n),
+                          const SizedBox(height: AppSpacing.md),
+                          _buildStatCards(colors, l10n),
+                          const SizedBox(height: AppSpacing.lg),
+                          _buildRecentScansSection(colors, l10n),
+                        ],
+                      ),
                     ),
             ),
           ),
@@ -295,8 +319,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildActionButtons(AppColors colors, AppLocalizations l10n) {
     return _ActionButton(
-      label: 'Capture Image',
-      sublabel: 'Capture or upload image to scan',
+      label: l10n.captureImage,
+      sublabel: l10n.captureUpload,
       iconPath: AppAssets.liveCameraIcon,
       colors: colors,
       onTap: () => context.push(AppRoutes.captureImage),
@@ -311,7 +335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Expanded(
           child: _StatCard(
             value: _totalScans == 0 ? '0' : '$_totalScans',
-            label: 'Total Scans',
+            label: l10n.totalScans,
             colors: colors,
           ),
         ),
@@ -319,7 +343,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Expanded(
           child: _StatCard(
             value: _mostFrequentDisplay(l10n),
-            label: 'Most Frequent',
+            label: l10n.mostFrequent,
             colors: colors,
             valueColor: _totalScans == 0
                 ? colors.textSecondary
@@ -332,7 +356,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Expanded(
           child: _StatCard(
             value: _totalHealthy == 0 ? '0' : '$_totalHealthy',
-            label: 'Total Healthy',
+            label: l10n.totalHealthy,
             colors: colors,
             valueColor: _totalHealthy == 0
                 ? colors.textPrimary
@@ -346,59 +370,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ── Recent scans ──────────────────────────────────────────
 
   Widget _buildRecentScansSection(AppColors colors, AppLocalizations l10n) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.recentScans,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textPrimary,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => context.push(AppRoutes.scanHistory),
-                child: Text(
-                  l10n.viewAll,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colors.primaryDark,
-                    decoration: TextDecoration.underline,
-                    decorationColor: colors.primaryDark,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          if (_recentScans.isEmpty)
-            Expanded(child: _buildEmptyState(colors, l10n))
-          else
-            Expanded(
-              child: Column(
-                children: _recentScans
-                    .map(
-                      (scan) => Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                        child: _ScanItem(
-                          scan: scan,
-                          colors: colors,
-                          onTap: () {
-                            // TODO: Navigate to scan results from history
-                          },
-                        ),
-                      ),
-                    )
-                    .toList(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              l10n.recentScans,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
               ),
             ),
-        ],
-      ),
+            GestureDetector(
+              onTap: () => context.push(AppRoutes.scanHistory),
+              child: Text(
+                l10n.viewAll,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.primaryDark,
+                  decoration: TextDecoration.underline,
+                  decorationColor: colors.primaryDark,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        if (_recentScans.isEmpty)
+          SizedBox(height: 200, child: _buildEmptyState(colors, l10n))
+        else
+          Column(
+            children: _recentScans
+                .map(
+                  (scan) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: _ScanItem(
+                      scan: scan,
+                      colors: colors,
+                      onTap: () {
+                        // TODO: Navigate to scan results from history
+                      },
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+      ],
     );
   }
 

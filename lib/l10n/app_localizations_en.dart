@@ -69,6 +69,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeBack => 'Welcome back,';
 
   @override
+  String get captureImage => 'Capture Image';
+
+  @override
+  String get captureUpload => 'Capture or upload image to scan';
+
+  @override
+  String get totalScans => 'Total Scans';
+
+  @override
+  String get totalHealthy => 'Total Healthy';
+
+  @override
+  String get mostFrequent => 'Most Frequent';
+
+  @override
   String get recentScans => 'Recent Scans';
 
   @override
@@ -175,6 +190,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gotIt => 'Got it';
+
+  @override
+  String get appSettings => 'App Settings';
+
+  @override
+  String get displayMode => 'Display Mode';
 
   @override
   String get languageLabel => 'Language';

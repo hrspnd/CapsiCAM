@@ -443,12 +443,12 @@ class _AccountScreenState extends State<AccountScreen> {
                 children: [
                   _buildProfileCard(colors),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildSectionLabel('App Settings', colors),
+                  _buildSectionLabel(l10n.appSettings, colors),
                   const SizedBox(height: AppSpacing.sm),
                   _buildSettingsGroup([
                     _SettingsRow(
                       iconPath: AppAssets.displayMode,
-                      label: 'Display Mode',
+                      label: l10n.displayMode,
                       value: _currentThemeLabel(context),
                       colors: colors,
                       onTap: () => _showDisplayModeSheet(colors),
