@@ -275,7 +275,7 @@ abstract class AppLocalizations {
   /// No description provided for @sourceScanned.
   ///
   /// In en, this message translates to:
-  /// **'Scanned'**
+  /// **'Captured'**
   String get sourceScanned;
 
   /// No description provided for @sourceUploaded.

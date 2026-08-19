@@ -8,6 +8,7 @@ import '../l10n/app_localizations.dart';
 import 'package:thesis_app/models/scan_result.dart';
 import 'package:thesis_app/services/supabase_service.dart';
 import 'package:thesis_app/services/scan_refresh_bus.dart';
+import 'history_result_screen.dart'; // for HistoryResultArgs
 
 // ============================================================
 // DASHBOARD SCREEN
@@ -129,8 +130,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? AppConstants.sourceScanned
           : AppConstants.sourceUploaded,
       date: DateFormat('MMM d, yyyy').format(scannedAt),
+      scannedAt: scannedAt,
       confidence: confidence,
+      predictions: {
+        'Healthy': (row['confidence_healthy'] as num).toDouble(),
+        'Bacterial_Leaf_Spot': (row['confidence_bls'] as num).toDouble(),
+        'Cercospora_Leaf_Spot': (row['confidence_cls'] as num).toDouble(),
+      },
       imagePath: row['image_url'] as String?,
+      heatmapPath: row['heatmap_url'] as String?,
     );
   }
 
@@ -319,8 +327,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildActionButtons(AppColors colors, AppLocalizations l10n) {
     return _ActionButton(
-      label: l10n.captureImage,
-      sublabel: l10n.captureUpload,
+      label: 'Capture Image',
+      sublabel: 'Capture or upload image to scan',
       iconPath: AppAssets.liveCameraIcon,
       colors: colors,
       onTap: () => context.push(AppRoutes.captureImage),
@@ -335,7 +343,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Expanded(
           child: _StatCard(
             value: _totalScans == 0 ? '0' : '$_totalScans',
-            label: l10n.totalScans,
+            label: 'Total Scans',
             colors: colors,
           ),
         ),
@@ -343,7 +351,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Expanded(
           child: _StatCard(
             value: _mostFrequentDisplay(l10n),
-            label: l10n.mostFrequent,
+            label: 'Most Frequent',
             colors: colors,
             valueColor: _totalScans == 0
                 ? colors.textSecondary
@@ -356,7 +364,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Expanded(
           child: _StatCard(
             value: _totalHealthy == 0 ? '0' : '$_totalHealthy',
-            label: l10n.totalHealthy,
+            label: 'Total Healthy',
             colors: colors,
             valueColor: _totalHealthy == 0
                 ? colors.textPrimary
@@ -411,7 +419,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       scan: scan,
                       colors: colors,
                       onTap: () {
-                        // TODO: Navigate to scan results from history
+                        context.push(
+                          AppRoutes.historyResult,
+                          extra: HistoryResultArgs(
+                            imagePath: scan.imagePath ??
+                                'assets/icons/sample_leafpic.png',
+                            label: scan.disease,
+                            confidence: scan.confidence,
+                            predictions: scan.predictions,
+                            source: scan.imageSource,
+                            date: scan.scannedAt,
+                            heatmapPath: scan.heatmapPath,
+                          ),
+                        );
                       },
                     ),
                   ),

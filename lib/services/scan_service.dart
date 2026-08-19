@@ -73,7 +73,7 @@ class ScanService {
       'confidence_cls': confidenceCls,
       'image_source': args.source.toLowerCase(),
       'heatmap_url': heatmapUrl,
-      'scanned_at': args.date.toIso8601String(),
+      'scanned_at': args.date.toUtc().toIso8601String(),
     });
   }
 }

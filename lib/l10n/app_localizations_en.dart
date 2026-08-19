@@ -97,7 +97,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scanHistoryTitle => 'Scan History';
 
   @override
-  String get sourceScanned => 'Scanned';
+  String get sourceScanned => 'Captured';
 
   @override
   String get sourceUploaded => 'Uploaded';

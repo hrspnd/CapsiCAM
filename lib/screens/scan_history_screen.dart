@@ -76,8 +76,15 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
           ? AppConstants.sourceScanned
           : AppConstants.sourceUploaded,
       date: DateFormat('MMM d, yyyy').format(scannedAt),
+      scannedAt: scannedAt,
       confidence: confidence,
+      predictions: {
+        'Healthy': (row['confidence_healthy'] as num).toDouble(),
+        'Bacterial_Leaf_Spot': (row['confidence_bls'] as num).toDouble(),
+        'Cercospora_Leaf_Spot': (row['confidence_cls'] as num).toDouble(),
+      },
       imagePath: row['image_url'] as String?,
+      heatmapPath: row['heatmap_url'] as String?,
     );
   }
 
@@ -269,38 +276,28 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
             padding: const EdgeInsets.all(AppSpacing.lg),
             itemCount: _scans.length,
             separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
-            itemBuilder: (_, index) => _ScanItem(
-              scan: _scans[index],
-              colors: colors,
-              onTap: () {
-                // TODO: Navigate to scan results from history
-                // context.push(
-                //   AppRoutes.scanResults,
-                //   extra: {'scan': _scans[index], 'fromHistory': true},
-                // );
-
-                //temporary -- temp data, remove later
-                context.push(
-                  AppRoutes.historyResult,
-                  extra: HistoryResultArgs(
-                    imagePath:
-                        _scans[index].imagePath ??
-                        'assets/icons/sample_leafpic.png',
-                    label: _scans[index].disease,
-                    confidence: _scans[index].confidence,
-                    predictions: {
-                      'Bacterial_Leaf_Spot': 1.0,
-                      'Cercospora_Leaf_Spot': 0.3,
-                      'Healthy': 0.1,
-                    },
-                    source: _scans[index].imageSource,
-                    date: DateTime.now(),
-                    heatmapPath: 'assets/icons/sample_heatmap.png',
-                  ),
-                );
-                //end
-              },
-            ),
+            itemBuilder: (_, index) {
+              final scan = _scans[index];
+              return _ScanItem(
+                scan: scan,
+                colors: colors,
+                onTap: () {
+                  context.push(
+                    AppRoutes.historyResult,
+                    extra: HistoryResultArgs(
+                      imagePath:
+                          scan.imagePath ?? 'assets/icons/sample_leafpic.png',
+                      label: scan.disease,
+                      confidence: scan.confidence,
+                      predictions: scan.predictions,
+                      source: scan.imageSource,
+                      date: scan.scannedAt,
+                      heatmapPath: scan.heatmapPath,
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ),
         Padding(

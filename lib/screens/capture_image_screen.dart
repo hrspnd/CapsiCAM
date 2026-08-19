@@ -29,6 +29,7 @@ class CaptureImageScreen extends StatefulWidget {
 class _CaptureImageScreenState extends State<CaptureImageScreen> {
   // ── Image state ───────────────────────────────────────────
   File? _selectedImage;
+  String _imageSource = AppConstants.sourceScanned;
   final _picker = ImagePicker();
 
   final _classifier = DiseaseClassifierService();
@@ -89,7 +90,10 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
         'picked path: ${image.path}, exists: ${await file.exists()}, size: ${await file.length()}',
       );
       if (mounted) {
-        setState(() => _selectedImage = file);
+        setState(() {
+          _selectedImage = file;
+          _imageSource = AppConstants.sourceScanned;
+        });
       }
     }
   }
@@ -100,7 +104,10 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
       imageQuality: 90,
     );
     if (image != null && mounted) {
-      setState(() => _selectedImage = File(image.path));
+      setState(() {
+        _selectedImage = File(image.path);
+        _imageSource = AppConstants.sourceUploaded;
+      });
     }
   }
 
@@ -131,8 +138,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
         label: translatedLabel,
         confidence: result.confidence,
         predictions: translatedPredictions,
-        source: AppConstants
-            .sourceScanned, // adjust per capture vs gallery if tracked separately
+        source: _imageSource,
         date: DateTime.now(),
         heatmapPath: heatmapPath,
       );

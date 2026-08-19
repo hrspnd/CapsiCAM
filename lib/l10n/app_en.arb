@@ -33,7 +33,7 @@
   "scanHistoryEmpty": "Your scan history will appear here.\nTap a button above to get started.",
 
   "scanHistoryTitle": "Scan History",
-  "sourceScanned": "Scanned",
+  "sourceScanned": "Captured",
   "sourceUploaded": "Uploaded",
   "clearHistoryButton": "Clear History",
   "clearHistoryConfirm": "Are you sure you want to clear all scan history? This cannot be undone.",

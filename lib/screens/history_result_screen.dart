@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../constants.dart';
 import '../l10n/app_localizations.dart';
+import 'package:thesis_app/services/scan_refresh_bus.dart';
 
 // ============================================================
 // HISTORY RESULT SCREEN
@@ -81,6 +82,39 @@ class HistoryResultScreen extends StatelessWidget {
 
   String get _displayLabel => args.label.replaceAll('_', ' ');
 
+  bool _isNetworkPath(String path) =>
+      path.startsWith('http://') || path.startsWith('https://');
+
+  /// Renders [path] as a network image when it's a URL (e.g. a Supabase
+  /// storage link), or a bundled asset image otherwise (e.g. the
+  /// placeholder sample images used as fallbacks).
+  Widget _scanImage(
+    String path, {
+    required BoxFit fit,
+    double? width,
+    required Widget Function(BuildContext, Object, StackTrace?) errorBuilder,
+  }) {
+    if (_isNetworkPath(path)) {
+      return Image.network(
+        path,
+        fit: fit,
+        width: width,
+        errorBuilder: errorBuilder,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return const Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        },
+      );
+    }
+    return Image.asset(path, fit: fit, width: width, errorBuilder: errorBuilder);
+  }
+
   String _translatedSource(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     if (args.source == AppConstants.sourceScanned) {
@@ -92,7 +126,12 @@ class HistoryResultScreen extends StatelessWidget {
     return args.source;
   }
 
-  void _onBack(BuildContext context) => context.pop();
+  void _onBack(BuildContext context) {
+    // Let listening screens (history list, dashboard) know to
+    // reload, in case anything changed while viewing this scan.
+    ScanRefreshBus.notify();
+    context.pop();
+  }
 
   void _showFullImage(BuildContext context, AppColors colors) {
     showDialog(
@@ -106,10 +145,15 @@ class HistoryResultScreen extends StatelessWidget {
           backgroundColor: colors.textBlack,
           body: Center(
             child: InteractiveViewer(
-              child: Image.asset(
+              child: _scanImage(
                 args.imagePath,
                 fit: BoxFit.contain,
                 width: double.infinity,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.image_not_supported_outlined,
+                  color: colors.textGray,
+                  size: 64,
+                ),
               ),
             ),
           ),
@@ -131,10 +175,15 @@ class HistoryResultScreen extends StatelessWidget {
           backgroundColor: colors.textBlack,
           body: Center(
             child: InteractiveViewer(
-              child: Image.asset(
+              child: _scanImage(
                 args.heatmapPath!,
                 fit: BoxFit.contain,
                 width: double.infinity,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.image_not_supported_outlined,
+                  color: colors.textGray,
+                  size: 64,
+                ),
               ),
             ),
           ),
@@ -228,7 +277,7 @@ class HistoryResultScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.xl),
         child: AspectRatio(
           aspectRatio: 1 / 1,
-          child: Image.asset(
+          child: _scanImage(
             args.imagePath,
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(
@@ -344,7 +393,7 @@ class HistoryResultScreen extends StatelessWidget {
                         child: AspectRatio(
                           aspectRatio: 1 / 1,
                           child: args.heatmapPath != null
-                              ? Image.asset(
+                              ? _scanImage(
                                   args.heatmapPath!,
                                   fit: BoxFit.cover,
                                   width: double.infinity,
