@@ -7,6 +7,8 @@ import '../../theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:thesis_app/l10n/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:thesis_app/services/supabase_service.dart';
+import 'package:thesis_app/services/profile_refresh_bus.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -17,13 +19,61 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   // ── Supabase data ─────────────────────────────────────────
-  // TODO: Replace with real data from Supabase Auth
-  // final user = Supabase.instance.client.auth.currentUser;
-  // final String _userName = user?.userMetadata?['display_name'] ?? '';
-  // final String _userEmail = user?.email ?? '';
+  final _supabaseService = SupabaseService();
 
-  final String _userName = 'John Doe';
-  final String _userEmail = 'johndoe123@gmail.com';
+  late String _userName;
+  late String _userEmail;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = Supabase.instance.client.auth.currentUser;
+    _userEmail = user?.email ?? '';
+    // Seed with whatever's cheaply available (auth metadata, or the
+    // email's local part) so the card never flashes placeholder text,
+    // then try to upgrade it with the real profile name below.
+    _userName =
+        (user?.userMetadata?['full_name'] as String?)?.trim().isNotEmpty ==
+            true
+        ? (user!.userMetadata!['full_name'] as String)
+        : (user?.email?.split('@').first ?? 'User');
+    _loadProfile();
+    ProfileRefreshBus.listenable.addListener(_onProfileRefreshSignal);
+  }
+
+  @override
+  void dispose() {
+    ProfileRefreshBus.listenable.removeListener(_onProfileRefreshSignal);
+    super.dispose();
+  }
+
+  void _onProfileRefreshSignal() {
+    if (!mounted) return;
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final fullName = await _supabaseService.fetchFullName();
+      if (!mounted || fullName == null || fullName.trim().isEmpty) return;
+      setState(() => _userName = fullName);
+    } catch (_) {
+      // Non-critical: keep the metadata/email-derived name we already
+      // have rather than surfacing an error for a profile-name lookup.
+    }
+  }
+
+  String get _userInitials {
+    final trimmed = _userName.trim();
+    if (trimmed.isEmpty) return '?';
+    return trimmed
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .map((part) => part[0])
+        .take(2)
+        .join()
+        .toUpperCase();
+  }
 
   // ── Theme ─────────────────────────────────────────────────
   String _currentThemeLabel(BuildContext context) {
@@ -571,7 +621,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 height: 44,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Text(
-                  _userName.split(' ').map((e) => e[0]).take(2).join(),
+                  _userInitials,
                   style: TextStyle(
                     color: colors.primaryDark,
                     fontWeight: FontWeight.w600,

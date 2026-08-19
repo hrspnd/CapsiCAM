@@ -3,7 +3,11 @@
 import 'package:flutter/material.dart';
 import '../../constants.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thesis_app/l10n/app_localizations.dart';
+import 'package:thesis_app/services/supabase_service.dart';
+import 'package:thesis_app/services/profile_refresh_bus.dart';
 
 class MyAccountScreen extends StatefulWidget {
   const MyAccountScreen({super.key});
@@ -14,21 +18,66 @@ class MyAccountScreen extends StatefulWidget {
 
 class _MyAccountScreenState extends State<MyAccountScreen> {
   // ── Supabase data ─────────────────────────────────────────
-  // TODO: Replace with real data from Supabase Auth
-  // final user = Supabase.instance.client.auth.currentUser;
-  // final String _userName = user?.userMetadata?['display_name'] ?? '';
-  // final String _userEmail = user?.email ?? '';
-  // final String _dateCreated = user?.createdAt != null
-  //     ? DateFormat('MMM d, yyyy').format(DateTime.parse(user!.createdAt))
-  //     : '';
+  final _supabaseService = SupabaseService();
+
+  late String _userName;
+  late String _userEmail;
+  late String _dateCreated;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = Supabase.instance.client.auth.currentUser;
+    _userEmail = user?.email ?? '';
+    // Seed with whatever's cheaply available so the screen never
+    // flashes placeholder text, then upgrade with the real profile
+    // name (see _loadProfile).
+    _userName =
+        (user?.userMetadata?['full_name'] as String?)?.trim().isNotEmpty ==
+            true
+        ? (user!.userMetadata!['full_name'] as String)
+        : (user?.email?.split('@').first ?? 'User');
+    _dateCreated = user?.createdAt != null
+        ? DateFormat('MMM d, yyyy').format(
+            DateTime.parse(user!.createdAt).toLocal(),
+          )
+        : '';
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final fullName = await _supabaseService.fetchFullName();
+      if (!mounted || fullName == null || fullName.trim().isEmpty) return;
+      setState(() => _userName = fullName);
+    } catch (_) {
+      // Non-critical: keep the metadata/email-derived name we already
+      // have rather than surfacing an error for a profile-name lookup.
+    }
+  }
+
+  String get _userInitials {
+    final trimmed = _userName.trim();
+    if (trimmed.isEmpty) return '?';
+    return trimmed
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .map((part) => part[0])
+        .take(2)
+        .join()
+        .toUpperCase();
+  }
+
+  // Set true whenever a change actually saves successfully, so _onBack
+  // only tells other screens to refresh when there's something to see.
+  bool _hasChanges = false;
 
   void _onBack() {
+    if (_hasChanges) {
+      ProfileRefreshBus.notify();
+    }
     context.pop();
-  }  
-
-  final String _userName = 'John Doe';
-  final String _userEmail = 'johndoe123@gmail.com';
-  final String _dateCreated = 'Apr 20, 2026';
+  }
 
   // ── Edit profile photo sheet ───────────────────────────────
   void _showEditProfilePhotoSheet(AppColors colors) {
@@ -366,19 +415,22 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
 
                       setDialogState(() => isLoading = true);
                       try {
-                        // TODO: Update display name in Supabase
-                        // await Supabase.instance.client.auth.updateUser(
-                        //   UserAttributes(data: {'display_name': value}),
-                        // );
-                        await Future.delayed(const Duration(seconds: 1));
+                        await _supabaseService.updateFullName(value);
 
                         if (!context.mounted) return;
+                        setState(() {
+                          _userName = value;
+                          _hasChanges = true;
+                        });
                         Navigator.of(context).pop();
                         _showDisplayNameSuccessSnackbar(colors);
-                      } on Exception {
+                      } catch (e) {
+                        final isOffline = e.toString().contains('offline');
                         setDialogState(() {
                           isLoading = false;
-                          nameError = l10n.errorServer;
+                          nameError = isOffline
+                              ? l10n.errorNetwork
+                              : l10n.errorServer;
                         });
                       }
                     },
@@ -476,11 +528,7 @@ void _showDisplayNameSuccessSnackbar(AppColors colors) {
                               height: 84,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Text(
-                                _userName
-                                    .split(' ')
-                                    .map((e) => e[0])
-                                    .take(2)
-                                    .join(),
+                                _userInitials,
                                 style: TextStyle(
                                   fontSize: 24,
                                   color: colors.primaryDark,
@@ -675,6 +723,7 @@ class _ChangePasswordDialog extends StatefulWidget {
 }
 
 class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
+  final _supabaseService = SupabaseService();
   final _currentController  = TextEditingController();
   final _newController      = TextEditingController();
   final _confirmController  = TextEditingController();
@@ -739,11 +788,10 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
 
     setState(() => _isLoading = true);
     try {
-      // TODO: Call Supabase → supabase_service.dart → changePassword()
-      // await Supabase.instance.client.auth.updateUser(
-      //   UserAttributes(password: _newController.text),
-      // );
-      await Future.delayed(const Duration(seconds: 1)); // placeholder
+      await _supabaseService.changePassword(
+        currentPassword: _currentController.text,
+        newPassword: _newController.text,
+      );
 
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -764,7 +812,8 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
         message.contains('invalid_credentials') ||
         message.contains('wrong password')) {
       currentErr = l10n.errorWrongPassword;
-    } else if (message.contains('network') ||
+    } else if (message.contains('offline') ||
+        message.contains('network') ||
         message.contains('SocketException') ||
         message.contains('connection')) {
       newErr = l10n.errorNetwork;

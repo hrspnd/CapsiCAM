@@ -79,6 +79,68 @@ class SupabaseService {
     }
   }
 
+  /// Updates the current user's display name in the `profiles` table.
+  /// Also mirrors it into the auth user's metadata so it's available
+  /// immediately (e.g. right after sign-in, before `profiles` is
+  /// fetched) without needing another round trip.
+  Future<void> updateFullName(String fullName) async {
+    try {
+      await _client
+          .from('profiles')
+          .update({'full_name': fullName})
+          .eq('id', _requireUserId);
+    } on SocketException {
+      throw Exception('offline');
+    } on PostgrestException catch (e) {
+      throw Exception('Could not update name: ${e.message}');
+    }
+
+    try {
+      await _client.auth.updateUser(
+        UserAttributes(data: {'full_name': fullName}),
+      );
+    } on SocketException {
+      throw Exception('offline');
+    } on AuthException catch (e) {
+      // The profiles row already saved successfully at this point, so
+      // don't fail the whole operation over the metadata mirror — just
+      // surface it as a non-fatal exception for the caller to decide on.
+      throw Exception('Name saved, but could not sync account info: ${e.message}');
+    }
+  }
+
+  /// Changes the current user's password. Re-authenticates with
+  /// [currentPassword] first so a wrong current password surfaces as
+  /// a normal error instead of silently changing to [newPassword].
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final email = _client.auth.currentUser?.email;
+    if (email == null) {
+      throw Exception('Not signed in.');
+    }
+
+    try {
+      await _client.auth.signInWithPassword(
+        email: email,
+        password: currentPassword,
+      );
+    } on SocketException {
+      throw Exception('offline');
+    } on AuthException catch (e) {
+      throw Exception(e.message);
+    }
+
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+    } on SocketException {
+      throw Exception('offline');
+    } on AuthException catch (e) {
+      throw Exception(e.message);
+    }
+  }
+
   /// Total scans, total healthy, and the most frequent *disease*
   /// (healthy scans are excluded from "most frequent" since that
   /// stat is meant to surface a problem, not a good outcome).

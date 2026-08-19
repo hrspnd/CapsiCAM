@@ -8,6 +8,7 @@ import '../l10n/app_localizations.dart';
 import 'package:thesis_app/models/scan_result.dart';
 import 'package:thesis_app/services/supabase_service.dart';
 import 'package:thesis_app/services/scan_refresh_bus.dart';
+import 'package:thesis_app/services/profile_refresh_bus.dart';
 import 'history_result_screen.dart'; // for HistoryResultArgs
 
 // ============================================================
@@ -42,15 +43,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _loadDashboard();
     ScanRefreshBus.listenable.addListener(_onScanRefreshSignal);
+    ProfileRefreshBus.listenable.addListener(_onProfileRefreshSignal);
   }
 
   @override
   void dispose() {
     ScanRefreshBus.listenable.removeListener(_onScanRefreshSignal);
+    ProfileRefreshBus.listenable.removeListener(_onProfileRefreshSignal);
     super.dispose();
   }
 
   void _onScanRefreshSignal() {
+    if (!mounted) return;
+    _loadDashboard();
+  }
+
+  void _onProfileRefreshSignal() {
     if (!mounted) return;
     _loadDashboard();
   }
