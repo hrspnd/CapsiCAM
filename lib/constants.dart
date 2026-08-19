@@ -171,6 +171,139 @@ class AppAssets {
 }
 
 // ============================================================
+// AVATARS
+// Mirrors the `profiles.avatar_type` / `avatar_value` check
+// constraints in Supabase — keep these two lists in sync with the DB.
+// ============================================================
+
+class AppAvatarIcons {
+  // Order matches the icon picker grid and the DB's allowed values.
+  static const List<String> names = [
+    'bell-pepper',
+    'boots',
+    'chili',
+    'clouds',
+    'gloves',
+    'hat',
+    'hoe',
+    'leaf',
+    'magnifying-glass',
+    'plant',
+    'rake',
+    'scissors',
+    'shovel',
+    'sickle',
+    'sun',
+    'water-drops',
+  ];
+
+  static String path(String name) => 'assets/icons/avatars/$name.png';
+}
+
+class AppAvatarColors {
+  // Monogram background choices offered in the color picker grid.
+  // Any '#RRGGBB' value passes the DB constraint, but the picker only
+  // offers this fixed palette.
+  static const List<String> palette = [
+    '#FFE082',
+    '#FFCC80',
+    '#FFAB91',
+    '#EF9A9A',
+    '#F48FB1',
+    '#CE93D8',
+    '#B39DDB',
+    '#9FA8DA',
+    '#90CAF9',
+    '#81D4FA',
+    '#80DEEA',
+    '#80CBC4',
+    '#A5D6A7',
+    '#C5E1A5',
+    '#E6EE9C',
+    '#FFF59D',
+    '#FFCC00',
+    '#FF9800',
+    '#FF5722',
+    '#E91E63',
+    '#9C27B0',
+    '#3F51B5',
+    '#2196F3',
+    '#009688',
+    '#4CAF50',
+    '#8BC34A',
+    '#607D8B',
+    '#795548',
+  ];
+
+  /// Parses a '#RRGGBB' string (as stored in `profiles.avatar_value`)
+  /// into a [Color]. Falls back to the schema default on bad input.
+  static Color fromHex(String hex) {
+    final cleaned = hex.replaceFirst('#', '');
+    final parsed = int.tryParse('FF$cleaned', radix: 16);
+    return parsed != null ? Color(parsed) : const Color(0xFFF5A623);
+  }
+}
+
+/// Renders a user's chosen avatar — either one of the fixed icon PNGs
+/// (already colored/circular in the asset itself, so no tint or extra
+/// background is applied) or a monogram (initials on a solid color).
+/// Shared by every screen that shows the avatar so they can't drift
+/// out of sync with each other or with `profiles.avatar_type`/
+/// `avatar_value`.
+class UserAvatar extends StatelessWidget {
+  final AppColors colors;
+  final String avatarType;
+  final String avatarValue;
+  final double diameter;
+  final String initials;
+
+  const UserAvatar({
+    super.key,
+    required this.colors,
+    required this.avatarType,
+    required this.avatarValue,
+    required this.diameter,
+    required this.initials,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (avatarType == 'icon') {
+      return ClipOval(
+        child: Image.asset(
+          AppAvatarIcons.path(avatarValue),
+          width: diameter,
+          height: diameter,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => CircleAvatar(
+            radius: diameter / 2,
+            backgroundColor: colors.primaryLightest,
+            child: Icon(
+              Icons.eco_outlined,
+              color: colors.primaryDark,
+              size: diameter * 0.5,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return CircleAvatar(
+      radius: diameter / 2,
+      backgroundColor: AppAvatarColors.fromHex(avatarValue),
+      child: Text(
+        initials,
+        style: TextStyle(
+          fontSize: diameter * 0.28,
+          fontWeight: FontWeight.w700,
+          color: Colors.black.withOpacity(0.6),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
 // ROUTE NAMES
 // ============================================================
 

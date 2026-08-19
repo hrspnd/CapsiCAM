@@ -18,6 +18,17 @@ class DashboardStats {
   });
 }
 
+/// The current user's chosen avatar. [type] is either 'icon' (with
+/// [value] one of the fixed icon names, e.g. 'leaf') or 'monogram'
+/// (with [value] a '#RRGGBB' hex color) — matches the
+/// `profiles.avatar_type` / `profiles.avatar_value` check constraints.
+class ProfileAvatar {
+  final String type;
+  final String value;
+
+  const ProfileAvatar({required this.type, required this.value});
+}
+
 class SupabaseService {
   final _client = Supabase.instance.client;
 
@@ -106,6 +117,47 @@ class SupabaseService {
       // don't fail the whole operation over the metadata mirror — just
       // surface it as a non-fatal exception for the caller to decide on.
       throw Exception('Name saved, but could not sync account info: ${e.message}');
+    }
+  }
+
+  /// The current user's avatar from the `profiles` table. Returns
+  /// null if the row (or the columns) can't be found, so callers can
+  /// fall back to the schema default ('monogram' / '#F5A623').
+  Future<ProfileAvatar?> fetchAvatar() async {
+    try {
+      final row = await _client
+          .from('profiles')
+          .select('avatar_type, avatar_value')
+          .eq('id', _requireUserId)
+          .maybeSingle();
+      final type = row?['avatar_type'] as String?;
+      final value = row?['avatar_value'] as String?;
+      if (type == null || value == null) return null;
+      return ProfileAvatar(type: type, value: value);
+    } on SocketException {
+      throw Exception('offline');
+    } on PostgrestException catch (e) {
+      throw Exception('Could not load avatar: ${e.message}');
+    }
+  }
+
+  /// Updates the current user's avatar in the `profiles` table.
+  /// [avatarType] must be 'icon' or 'monogram'; [avatarValue] must be
+  /// a name from the fixed icon set (for 'icon') or a '#RRGGBB' hex
+  /// color (for 'monogram') — the DB check constraints enforce this.
+  Future<void> updateAvatar({
+    required String avatarType,
+    required String avatarValue,
+  }) async {
+    try {
+      await _client.from('profiles').update({
+        'avatar_type': avatarType,
+        'avatar_value': avatarValue,
+      }).eq('id', _requireUserId);
+    } on SocketException {
+      throw Exception('offline');
+    } on PostgrestException catch (e) {
+      throw Exception('Could not update avatar: ${e.message}');
     }
   }
 

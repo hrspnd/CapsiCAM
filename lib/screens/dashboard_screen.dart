@@ -32,6 +32,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _mostFrequentDisease; // raw classification, e.g. 'bacterial_leaf_spot'
   List<ScanResult> _recentScans = const [];
 
+  // Seeded with the schema defaults ('monogram' / '#F5A623') so the
+  // header avatar never flashes something else before _loadAvatar
+  // resolves. Fetched separately from _loadDashboard (see _loadAvatar)
+  // so a failed avatar lookup never blocks stats/scans from loading.
+  String _avatarType = 'monogram';
+  String _avatarValue = '#F5A623';
+
   bool _isLoading = true;
   bool _isOffline = false;
   String? _errorMessage;
@@ -42,6 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadDashboard();
+    _loadAvatar();
     ScanRefreshBus.listenable.addListener(_onScanRefreshSignal);
     ProfileRefreshBus.listenable.addListener(_onProfileRefreshSignal);
   }
@@ -61,6 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _onProfileRefreshSignal() {
     if (!mounted) return;
     _loadDashboard();
+    _loadAvatar();
   }
 
   Future<void> _loadDashboard() async {
@@ -100,6 +109,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ? "You're offline. Showing what we could load."
             : "Couldn't load your dashboard. Pull down or tap retry.";
       });
+    }
+  }
+
+  Future<void> _loadAvatar() async {
+    try {
+      final avatar = await _supabaseService.fetchAvatar();
+      if (!mounted || avatar == null) return;
+      setState(() {
+        _avatarType = avatar.type;
+        _avatarValue = avatar.value;
+      });
+    } catch (_) {
+      // Non-critical: keep the default avatar rather than surfacing
+      // an error for what's ultimately a cosmetic lookup.
     }
   }
 
@@ -306,24 +329,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           GestureDetector(
             onTap: () => context.push(AppRoutes.account),
-            child: CircleAvatar(
-              radius: 22,
-              backgroundColor: Colors.white.withValues(alpha: 0.2),
-              child: ClipOval(
-                child: Image.asset(
-                  AppAssets.hatAvatar,
-                  width: 44,
-                  height: 44,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Text(
-                    _userName.split(' ').map((e) => e[0]).take(2).join(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
+            child: UserAvatar(
+              colors: colors,
+              avatarType: _avatarType,
+              avatarValue: _avatarValue,
+              diameter: 44,
+              initials:
+                  _userName.split(' ').where((e) => e.isNotEmpty).map((e) => e[0]).take(2).join(),
             ),
           ),
         ],

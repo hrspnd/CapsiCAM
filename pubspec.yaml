@@ -100,6 +100,7 @@ flutter:
     - assets/
     - assets/icons/
     - assets/fonts/
+    - assets/icons/avatars/
     - assets/model/model_dual_output.tflite
     - assets/model/class_names.json
     - assets/model/cam_weights.json

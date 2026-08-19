@@ -24,6 +24,12 @@ class _AccountScreenState extends State<AccountScreen> {
   late String _userName;
   late String _userEmail;
 
+  // Seeded with the schema defaults ('monogram' / '#F5A623') so the
+  // profile-card avatar never flashes something else before
+  // _loadAvatar resolves.
+  String _avatarType = 'monogram';
+  String _avatarValue = '#F5A623';
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +44,7 @@ class _AccountScreenState extends State<AccountScreen> {
         ? (user!.userMetadata!['full_name'] as String)
         : (user?.email?.split('@').first ?? 'User');
     _loadProfile();
+    _loadAvatar();
     ProfileRefreshBus.listenable.addListener(_onProfileRefreshSignal);
   }
 
@@ -50,6 +57,7 @@ class _AccountScreenState extends State<AccountScreen> {
   void _onProfileRefreshSignal() {
     if (!mounted) return;
     _loadProfile();
+    _loadAvatar();
   }
 
   Future<void> _loadProfile() async {
@@ -60,6 +68,20 @@ class _AccountScreenState extends State<AccountScreen> {
     } catch (_) {
       // Non-critical: keep the metadata/email-derived name we already
       // have rather than surfacing an error for a profile-name lookup.
+    }
+  }
+
+  Future<void> _loadAvatar() async {
+    try {
+      final avatar = await _supabaseService.fetchAvatar();
+      if (!mounted || avatar == null) return;
+      setState(() {
+        _avatarType = avatar.type;
+        _avatarValue = avatar.value;
+      });
+    } catch (_) {
+      // Non-critical: keep the default avatar rather than surfacing
+      // an error for what's ultimately a cosmetic lookup.
     }
   }
 
@@ -610,25 +632,12 @@ class _AccountScreenState extends State<AccountScreen> {
       ),
       child: Row(
         children: [
-          // Avatar — TODO: replace with user's avatar from Supabase Storage
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: const Color(0xFFFFE082),
-            child: ClipOval(
-              child: Image.asset(
-                AppAssets.hatAvatar,
-                width: 44,
-                height: 44,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Text(
-                  _userInitials,
-                  style: TextStyle(
-                    color: colors.primaryDark,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
+          UserAvatar(
+            colors: colors,
+            avatarType: _avatarType,
+            avatarValue: _avatarValue,
+            diameter: 44,
+            initials: _userInitials,
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(

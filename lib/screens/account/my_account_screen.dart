@@ -24,6 +24,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   late String _userEmail;
   late String _dateCreated;
 
+  // Seeded with the schema defaults ('monogram' / '#F5A623') so the
+  // avatar circle never flashes something else before _loadAvatar
+  // resolves.
+  String _avatarType = 'monogram';
+  String _avatarValue = '#F5A623';
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +49,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
           )
         : '';
     _loadProfile();
+    _loadAvatar();
   }
 
   Future<void> _loadProfile() async {
@@ -53,6 +60,20 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     } catch (_) {
       // Non-critical: keep the metadata/email-derived name we already
       // have rather than surfacing an error for a profile-name lookup.
+    }
+  }
+
+  Future<void> _loadAvatar() async {
+    try {
+      final avatar = await _supabaseService.fetchAvatar();
+      if (!mounted || avatar == null) return;
+      setState(() {
+        _avatarType = avatar.type;
+        _avatarValue = avatar.value;
+      });
+    } catch (_) {
+      // Non-critical: keep the default avatar rather than surfacing
+      // an error for what's ultimately a cosmetic lookup.
     }
   }
 
@@ -72,6 +93,26 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   // only tells other screens to refresh when there's something to see.
   bool _hasChanges = false;
 
+  /// Renders the current avatar (icon-on-color or monogram) at the
+  /// given [diameter]. Shared by the profile header and the picker
+  /// sheet's "current selection" preview. Thin wrapper around the
+  /// shared [UserAvatar] widget (also used by the dashboard and
+  /// account screens) so all three stay visually in sync.
+  Widget _buildAvatarCircle({
+    required AppColors colors,
+    required double diameter,
+    String? type,
+    String? value,
+  }) {
+    return UserAvatar(
+      colors: colors,
+      avatarType: type ?? _avatarType,
+      avatarValue: value ?? _avatarValue,
+      diameter: diameter,
+      initials: _userInitials,
+    );
+  }
+
   void _onBack() {
     if (_hasChanges) {
       ProfileRefreshBus.notify();
@@ -81,6 +122,13 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
 
   // ── Edit profile photo sheet ───────────────────────────────
   void _showEditProfilePhotoSheet(AppColors colors) {
+    // Local, pending selection — only written back to Supabase (and
+    // to _avatarType/_avatarValue) if the user taps Save.
+    String pendingType = _avatarType;
+    String pendingValue = _avatarValue;
+    bool isSaving = false;
+    String? errorText;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -88,221 +136,328 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.85,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.lg,
-                    AppSpacing.lg,
-                    0,
-                  ),
-                  child: Column(
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 36,
-                          height: 4,
-                          margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-                          decoration: BoxDecoration(
-                            color: colors.border,
-                            borderRadius: BorderRadius.circular(AppRadius.full),
-                          ),
-                        ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            Future<void> onSave() async {
+              setSheetState(() {
+                isSaving = true;
+                errorText = null;
+              });
+              try {
+                await _supabaseService.updateAvatar(
+                  avatarType: pendingType,
+                  avatarValue: pendingValue,
+                );
+                if (!mounted) return;
+                setState(() {
+                  _avatarType = pendingType;
+                  _avatarValue = pendingValue;
+                  _hasChanges = true;
+                });
+                Navigator.pop(sheetContext);
+                _showAvatarSuccessSnackbar(colors);
+              } catch (e) {
+                final isOffline = e.toString().contains('offline');
+                setSheetState(() {
+                  isSaving = false;
+                  errorText = isOffline
+                      ? 'You appear to be offline. Please try again.'
+                      : 'Could not save your avatar. Please try again.';
+                });
+              }
+            }
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.85,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              expand: false,
+              builder: (context, scrollController) {
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        0,
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
                         children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: colors.textSecondary,
-                                fontSize: 14,
+                          Center(
+                            child: Container(
+                              width: 36,
+                              height: 4,
+                              margin:
+                                  const EdgeInsets.only(bottom: AppSpacing.lg),
+                              decoration: BoxDecoration(
+                                color: colors.border,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.full),
                               ),
                             ),
                           ),
-                          Text(
-                            'Edit Profile',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: Text(
-                              'Save',
-                              style: TextStyle(
-                                color: colors.primary,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Divider(color: colors.border),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            crossAxisSpacing: AppSpacing.md,
-                            mainAxisSpacing: AppSpacing.md,
-                          ),
-                          itemCount: 16,
-                          itemBuilder: (context, index) {
-                            return GestureDetector(
-                              onTap: () {},
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: colors.primaryLightest,
-                                  border: Border.all(
-                                    color: index == 0
-                                        ? colors.primaryDark
-                                        : Colors.transparent,
-                                    width: 2.5,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              TextButton(
+                                onPressed: isSaving
+                                    ? null
+                                    : () => Navigator.pop(sheetContext),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    color: colors.textSecondary,
+                                    fontSize: 14,
                                   ),
                                 ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.image_outlined,
-                                      color: colors.primaryDark,
-                                      size: 28,
-                                    ),
-                                    if (index == 0)
-                                      Positioned(
-                                        bottom: 2,
-                                        right: 2,
-                                        child: Container(
-                                          width: 18,
-                                          height: 18,
-                                          decoration: BoxDecoration(
-                                            color: colors.primaryDark,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.check,
-                                            color: Colors.white,
-                                            size: 12,
-                                          ),
+                              ),
+                              Text(
+                                'Edit Profile',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: isSaving ? null : onSave,
+                                child: isSaving
+                                    ? SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: colors.primary,
+                                        ),
+                                      )
+                                    : Text(
+                                        'Save',
+                                        style: TextStyle(
+                                          color: colors.primary,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                  ],
+                              ),
+                            ],
+                          ),
+                          if (errorText != null) ...[
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                errorText!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colors.danger,
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: AppSpacing.lg),
-                          child: Divider(color: colors.border),
-                        ),
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            crossAxisSpacing: AppSpacing.md,
-                            mainAxisSpacing: AppSpacing.md,
-                          ),
-                          itemCount: 28,
-                          itemBuilder: (context, index) {
-                            final placeholderColors = [
-                              const Color(0xFFFFE082),
-                              const Color(0xFFFFCC80),
-                              const Color(0xFFFFAB91),
-                              const Color(0xFFEF9A9A),
-                              const Color(0xFFF48FB1),
-                              const Color(0xFFCE93D8),
-                              const Color(0xFFB39DDB),
-                              const Color(0xFF9FA8DA),
-                              const Color(0xFF90CAF9),
-                              const Color(0xFF81D4FA),
-                              const Color(0xFF80DEEA),
-                              const Color(0xFF80CBC4),
-                              const Color(0xFFA5D6A7),
-                              const Color(0xFFC5E1A5),
-                              const Color(0xFFE6EE9C),
-                              const Color(0xFFFFF59D),
-                              const Color(0xFFFFCC00),
-                              const Color(0xFFFF9800),
-                              const Color(0xFFFF5722),
-                              const Color(0xFFE91E63),
-                              const Color(0xFF9C27B0),
-                              const Color(0xFF3F51B5),
-                              const Color(0xFF2196F3),
-                              const Color(0xFF009688),
-                              const Color(0xFF4CAF50),
-                              const Color(0xFF8BC34A),
-                              const Color(0xFF607D8B),
-                              const Color(0xFF795548),
-                            ];
-                            final color =
-                                placeholderColors[index % placeholderColors.length];
-                            return GestureDetector(
-                              onTap: () {},
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: color,
-                                  border: Border.all(
-                                    color: Colors.transparent,
-                                    width: 2.5,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'MJ',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.black.withOpacity(0.6),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                          ],
+                          Divider(color: colors.border),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 4,
+                                crossAxisSpacing: AppSpacing.md,
+                                mainAxisSpacing: AppSpacing.md,
+                              ),
+                              itemCount: AppAvatarIcons.names.length,
+                              itemBuilder: (context, index) {
+                                final name = AppAvatarIcons.names[index];
+                                final isSelected = pendingType == 'icon' &&
+                                    pendingValue == name;
+                                return GestureDetector(
+                                  onTap: isSaving
+                                      ? null
+                                      : () => setSheetState(() {
+                                            pendingType = 'icon';
+                                            pendingValue = name;
+                                          }),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? colors.primaryDark
+                                            : Colors.transparent,
+                                        width: 2.5,
+                                      ),
+                                    ),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        ClipOval(
+                                          child: SizedBox.expand(
+                                            child: Image.asset(
+                                              AppAvatarIcons.path(name),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  CircleAvatar(
+                                                backgroundColor:
+                                                    colors.primaryLightest,
+                                                child: Icon(
+                                                  Icons.image_outlined,
+                                                  color: colors.primaryDark,
+                                                  size: 28,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        if (isSelected)
+                                          Positioned(
+                                            bottom: 2,
+                                            right: 2,
+                                            child: Container(
+                                              width: 18,
+                                              height: 18,
+                                              decoration: BoxDecoration(
+                                                color: colors.primaryDark,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.check,
+                                                color: Colors.white,
+                                                size: 12,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   ),
-                                ),
+                                );
+                              },
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: AppSpacing.lg),
+                              child: Divider(color: colors.border),
+                            ),
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 4,
+                                crossAxisSpacing: AppSpacing.md,
+                                mainAxisSpacing: AppSpacing.md,
                               ),
-                            );
-                          },
+                              itemCount: AppAvatarColors.palette.length,
+                              itemBuilder: (context, index) {
+                                final hex = AppAvatarColors.palette[index];
+                                final isSelected = pendingType == 'monogram' &&
+                                    pendingValue.toUpperCase() ==
+                                        hex.toUpperCase();
+                                return GestureDetector(
+                                  onTap: isSaving
+                                      ? null
+                                      : () => setSheetState(() {
+                                            pendingType = 'monogram';
+                                            pendingValue = hex;
+                                          }),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppAvatarColors.fromHex(hex),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? colors.primaryDark
+                                            : Colors.transparent,
+                                        width: 2.5,
+                                      ),
+                                    ),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Text(
+                                          _userInitials,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.black
+                                                .withOpacity(0.6),
+                                          ),
+                                        ),
+                                        if (isSelected)
+                                          Positioned(
+                                            bottom: 2,
+                                            right: 2,
+                                            child: Container(
+                                              width: 18,
+                                              height: 18,
+                                              decoration: BoxDecoration(
+                                                color: colors.primaryDark,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.check,
+                                                color: Colors.white,
+                                                size: 12,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                          ],
                         ),
-                        const SizedBox(height: AppSpacing.lg),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             );
           },
         );
       },
+    );
+  }
+
+  void _showAvatarSuccessSnackbar(AppColors colors) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle_outline_rounded,
+                color: colors.textWhite, size: 18),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              'Avatar updated',
+              style: TextStyle(
+                fontFamily: 'Onest',
+                color: colors.textWhite,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: colors.primaryDark,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        margin: const EdgeInsets.all(AppSpacing.lg),
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 
@@ -518,26 +673,7 @@ void _showDisplayNameSuccessSnackbar(AppColors colors) {
                   Center(
                     child: Stack(
                       children: [
-                        CircleAvatar(
-                          radius: 42,
-                          backgroundColor: const Color(0xFFFFE082),
-                          child: ClipOval(
-                            child: Image.asset(
-                              AppAssets.hatAvatar,
-                              width: 84,
-                              height: 84,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Text(
-                                _userInitials,
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  color: colors.primaryDark,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        _buildAvatarCircle(colors: colors, diameter: 84),
                         Positioned(
                           bottom: 2,
                           right: 2,
