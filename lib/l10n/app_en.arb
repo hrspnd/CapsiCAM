@@ -114,5 +114,50 @@
   "errorEmptyNewPassword": "Please enter a new password.",
   "errorSamePassword": "New password must be different from your current password.",
   "errorEmptyConfirmNewPassword": "Please confirm your new password.",
-  "successPasswordChanged": "Password changed! You're all set."
+  "successPasswordChanged": "Password changed! You're all set.",
+
+  "offlineNoCache": "You're offline. Showing what we could load.",
+  "retryButton": "Retry",
+  "cacheAgeJustNow": "just now",
+  "cacheAgeMinutes": "{count}m ago",
+  "@cacheAgeMinutes": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "cacheAgeHours": "{count}h ago",
+  "@cacheAgeHours": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "cacheAgeDays": "{count}d ago",
+  "@cacheAgeDays": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "dashboardOfflineCached": "You're offline. Showing saved data from {age}.",
+  "@dashboardOfflineCached": {
+    "placeholders": { "age": { "type": "String" } }
+  },
+  "dashboardRefreshFailedCached": "Couldn't refresh. Showing saved data from {age}.",
+  "@dashboardRefreshFailedCached": {
+    "placeholders": { "age": { "type": "String" } }
+  },
+  "dashboardShowingCachedRefreshing": "Showing saved data from {age} — refreshing…",
+  "@dashboardShowingCachedRefreshing": {
+    "placeholders": { "age": { "type": "String" } }
+  },
+  "dashboardLoadFailed": "Couldn't load your dashboard. Pull down or tap retry.",
+  "retrySnackbarStillOffline": "Still offline.",
+  "retrySnackbarCouldNotRefresh": "Couldn't refresh.",
+  "retrySnackbarDashboardRefreshed": "Dashboard refreshed.",
+
+  "historyOfflineCached": "You're offline. Showing saved history from {age}.",
+  "@historyOfflineCached": {
+    "placeholders": { "age": { "type": "String" } }
+  },
+  "historyRefreshFailedCached": "Couldn't refresh. Showing saved history from {age}.",
+  "@historyRefreshFailedCached": {
+    "placeholders": { "age": { "type": "String" } }
+  },
+  "historyLoadFailed": "Couldn't load your scan history. Pull down or tap retry.",
+
+  "offlineSavedData": "Offline · saved data"
 }

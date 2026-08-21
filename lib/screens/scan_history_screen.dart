@@ -1,17 +1,32 @@
 // scan_history_screen.dart
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../constants.dart';
 import '../l10n/app_localizations.dart';
 import 'package:thesis_app/models/scan_result.dart';
 import 'package:thesis_app/services/supabase_service.dart';
+import 'package:thesis_app/services/cache_service.dart';
+import 'package:thesis_app/widgets/nav_item.dart';
+import 'package:thesis_app/widgets/scan_item.dart';
 import 'history_result_screen.dart';
 
 // ============================================================
 // SCAN HISTORY SCREEN
 // ============================================================
+
+/// Which offline/cache banner message is currently showing, if any.
+/// Stored instead of the resolved String itself so the text is
+/// (re)computed from AppLocalizations at build time — see the same
+/// pattern (and rationale) in dashboard_screen.dart's
+/// _DashboardBannerKind.
+enum _HistoryBannerKind {
+  offlineWithCache,
+  refreshFailedWithCache,
+  offlineNoCache,
+  loadFailedNoCache,
+}
 
 class ScanHistoryScreen extends StatefulWidget {
   const ScanHistoryScreen({super.key});
@@ -23,12 +38,15 @@ class ScanHistoryScreen extends StatefulWidget {
 class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
   // ── Supabase data ─────────────────────────────────────────
   final _supabaseService = SupabaseService();
+  final _cacheService = CacheService();
 
   List<ScanResult> _scans = const [];
 
   bool _isLoading = true;
   bool _isOffline = false;
-  String? _errorMessage;
+  bool _showingCachedData = false;
+  _HistoryBannerKind? _bannerKind;
+  DateTime? _cachedAt;
 
   int _currentNavIndex = 0;
 
@@ -38,80 +56,54 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
     _loadHistory();
   }
 
-  // ── Row → ScanResult mapping ────────────────────────────────
-  // Mirrors dashboard_screen.dart's _scanFromRow. Kept in sync
-  // manually for now — if these two ever drift, pull this into a
-  // shared mapper (e.g. models/scan_result.dart) instead.
-
-  static const Map<String, String> _diseaseDisplayKeys = {
-    'healthy': 'Healthy',
-    'bacterial_leaf_spot': 'Bacterial_Leaf_Spot',
-    'cercospora_leaf_spot': 'Cercospora_Leaf_Spot',
-  };
-
-  ScanResult _scanFromRow(Map<String, dynamic> row) {
-    final classification = row['classification'] as String;
-
-    double confidence;
-    switch (classification) {
-      case 'healthy':
-        confidence = (row['confidence_healthy'] as num).toDouble();
-        break;
-      case 'bacterial_leaf_spot':
-        confidence = (row['confidence_bls'] as num).toDouble();
-        break;
-      case 'cercospora_leaf_spot':
-        confidence = (row['confidence_cls'] as num).toDouble();
-        break;
-      default:
-        confidence = 0.0;
-    }
-
-    final scannedAt = DateTime.parse(row['scanned_at'] as String).toLocal();
-
-    return ScanResult(
-      id: row['id'] as String,
-      disease: _diseaseDisplayKeys[classification] ?? classification,
-      imageSource: row['image_source'] == 'captured'
-          ? AppConstants.sourceScanned
-          : AppConstants.sourceUploaded,
-      date: DateFormat('MMM d, yyyy').format(scannedAt),
-      scannedAt: scannedAt,
-      confidence: confidence,
-      predictions: {
-        'Healthy': (row['confidence_healthy'] as num).toDouble(),
-        'Bacterial_Leaf_Spot': (row['confidence_bls'] as num).toDouble(),
-        'Cercospora_Leaf_Spot': (row['confidence_cls'] as num).toDouble(),
-      },
-      imagePath: row['image_url'] as String?,
-      heatmapPath: row['heatmap_url'] as String?,
-    );
-  }
-
   Future<void> _loadHistory() async {
     setState(() {
       _isLoading = true;
       _isOffline = false;
-      _errorMessage = null;
+      _bannerKind = null;
     });
 
     try {
       final rows = await _supabaseService.fetchAllScans();
+      final scans = rows.map(ScanResult.fromRow).toList();
       if (!mounted) return;
       setState(() {
-        _scans = rows.map(_scanFromRow).toList();
+        _scans = scans;
         _isLoading = false;
+        _showingCachedData = false;
+        _cachedAt = null;
+        _bannerKind = null;
       });
+      unawaited(_cacheService.saveHistory(scans));
     } catch (e) {
       if (!mounted) return;
       final isOffline = e.toString().contains('offline');
-      setState(() {
-        _isLoading = false;
-        _isOffline = isOffline;
-        _errorMessage = isOffline
-            ? "You're offline. Showing what we could load."
-            : "Couldn't load your scan history. Pull down or tap retry.";
-      });
+      final cached = await _cacheService.loadHistory();
+
+      if (!mounted) return;
+
+      if (cached != null) {
+        setState(() {
+          _scans = cached.data;
+          _isLoading = false;
+          _isOffline = isOffline;
+          _showingCachedData = true;
+          _cachedAt = cached.cachedAt;
+          _bannerKind = isOffline
+              ? _HistoryBannerKind.offlineWithCache
+              : _HistoryBannerKind.refreshFailedWithCache;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _isOffline = isOffline;
+          _showingCachedData = false;
+          _cachedAt = null;
+          _bannerKind = isOffline
+              ? _HistoryBannerKind.offlineNoCache
+              : _HistoryBannerKind.loadFailedNoCache;
+        });
+      }
     }
   }
 
@@ -175,6 +167,11 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
                 setState(() => _scans = const []); // optimistic
                 try {
                   await _supabaseService.clearScanHistory();
+                  // Only drop the local cache once the server-side
+                  // clear actually succeeds — otherwise a rollback
+                  // below would leave stale scans in state but no
+                  // cached fallback if the app goes offline next.
+                  unawaited(_cacheService.clearHistory());
                 } catch (e) {
                   if (!mounted) return;
                   setState(() => _scans = previousScans); // roll back
@@ -200,6 +197,25 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
     );
   }
 
+  /// Resolves [_bannerKind] to display text using the current build's
+  /// AppLocalizations — see _DashboardBannerKind's rationale in
+  /// dashboard_screen.dart for why this isn't cached in state.
+  String _bannerText(AppLocalizations l10n) {
+    final kind = _bannerKind;
+    if (kind == null) return '';
+    final age = _cachedAt != null ? formatCacheAge(_cachedAt!, l10n) : '';
+    switch (kind) {
+      case _HistoryBannerKind.offlineWithCache:
+        return l10n.historyOfflineCached(age);
+      case _HistoryBannerKind.refreshFailedWithCache:
+        return l10n.historyRefreshFailedCached(age);
+      case _HistoryBannerKind.offlineNoCache:
+        return l10n.offlineNoCache;
+      case _HistoryBannerKind.loadFailedNoCache:
+        return l10n.historyLoadFailed;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
@@ -210,16 +226,18 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
       body: Column(
         children: [
           _buildHeader(colors, l10n),
-          if (_errorMessage != null)
+          if (_bannerKind != null)
             Container(
               width: double.infinity,
-              color: _isOffline ? colors.surfaceGray : colors.dangerBg,
+              color: (_isOffline || _showingCachedData)
+                  ? colors.surfaceGray
+                  : colors.dangerBg,
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.lg,
                 vertical: AppSpacing.sm,
               ),
               child: Text(
-                _errorMessage!,
+                _bannerText(l10n),
                 style: TextStyle(fontSize: 12, color: colors.textSecondary),
               ),
             ),
@@ -278,7 +296,7 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
             separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
             itemBuilder: (_, index) {
               final scan = _scans[index];
-              return _ScanItem(
+              return ScanItem(
                 scan: scan,
                 colors: colors,
                 onTap: () {
@@ -418,181 +436,23 @@ class _ScanHistoryScreenState extends State<ScanHistoryScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _NavItem(
+          NavItem(
             iconPath: AppAssets.historyIcon,
             label: 'History',
             isActive: _currentNavIndex == 0,
             onTap: () => _onNavTap(0),
           ),
-          _NavItem(
+          NavItem(
             iconPath: AppAssets.homeIcon,
             label: 'Home',
             isActive: _currentNavIndex == 1,
             onTap: () => _onNavTap(1),
-            iconSize: 22,
           ),
-          _NavItem(
+          NavItem(
             iconPath: AppAssets.accountIcon,
             label: 'Account',
             isActive: _currentNavIndex == 2,
             onTap: () => _onNavTap(2),
-            iconSize: 22,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
-// REUSABLE WIDGETS
-// ============================================================
-
-class _ScanItem extends StatelessWidget {
-  final ScanResult scan;
-  final VoidCallback onTap;
-  final AppColors colors;
-
-  const _ScanItem({
-    required this.scan,
-    required this.onTap,
-    required this.colors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final sourceLabel = scan.imageSource == AppConstants.sourceScanned
-        ? l10n.sourceScanned
-        : l10n.sourceUploaded;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.md,
-        ),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: colors.border),
-        ),
-        child: Row(
-          children: [
-            // Thumbnail
-            // TODO: Replace with Image.network(scan.imageUrl) when Supabase is connected
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: colors.bgForDisease(scan.disease),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: scan.imagePath != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Image.network(
-                        scan.imagePath!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.eco_outlined,
-                          color: colors.forDisease(scan.disease),
-                          size: 24,
-                        ),
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
-                          return Center(
-                            child: SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: colors.primary,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    )
-                  : Icon(
-                      Icons.eco_outlined,
-                      color: colors.forDisease(scan.disease),
-                      size: 24,
-                    ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    scan.disease.replaceAll('_', ' '),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$sourceLabel · ${scan.date}',
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: colors.chevron, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-  final String? iconPath;
-  final double iconSize;
-
-  const _NavItem({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-    this.iconPath,
-    this.iconSize = 22,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive
-        ? Colors.white
-        : Colors.white.withValues(alpha: 0.45);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (iconPath != null)
-            Image.asset(
-              iconPath!,
-              width: 20,
-              height: 20,
-              color: color,
-              errorBuilder: (_, __, ___) =>
-                  Icon(Icons.history, color: color, size: 22),
-            ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              color: color,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            ),
           ),
         ],
       ),

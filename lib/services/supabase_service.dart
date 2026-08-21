@@ -32,21 +32,35 @@ class ProfileAvatar {
 class SupabaseService {
   final _client = Supabase.instance.client;
 
+  // Applied to every network call below. Without this, a dead/slow
+  // connection (e.g. connected to Wi-Fi with no real internet) can
+  // hang for the OS's own connection timeout — commonly 30-60+
+  // seconds on mobile — before failing. This makes every call fail
+  // fast into the 'offline' path instead, so offline fallbacks (see
+  // CacheService) kick in promptly rather than after a long stall.
+  static const _networkTimeout = Duration(seconds: 8);
+
   Future<void> signUpWithEmail({
     required String fullName,
     required String email,
     required String password,
   }) async {
-    final response = await _client.auth.signUp(
-      email: email,
-      password: password,
-      data: {
-        'full_name': fullName,
-      },
-    );
+    try {
+      final response = await _client.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          'full_name': fullName,
+        },
+      ).timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
 
-    if (response.user == null || response.session == null) {
-      throw Exception('Sign up failed. Please try again.');
+      if (response.user == null || response.session == null) {
+        throw Exception('Sign up failed. Please try again.');
+      }
+    } on SocketException {
+      throw Exception('offline');
+    } on AuthException catch (e) {
+      throw Exception(e.message);
     }
   }
 
@@ -54,13 +68,19 @@ class SupabaseService {
     required String email,
     required String password,
   }) async {
-    final response = await _client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final response = await _client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      ).timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
 
-    if (response.user == null || response.session == null) {
-      throw Exception('Login failed. Please try again.');
+      if (response.user == null || response.session == null) {
+        throw Exception('Login failed. Please try again.');
+      }
+    } on SocketException {
+      throw Exception('offline');
+    } on AuthException catch (e) {
+      throw Exception(e.message);
     }
   }
 
@@ -81,7 +101,8 @@ class SupabaseService {
           .from('profiles')
           .select('full_name')
           .eq('id', _requireUserId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
       return row?['full_name'] as String?;
     } on SocketException {
       throw Exception('offline');
@@ -99,7 +120,8 @@ class SupabaseService {
       await _client
           .from('profiles')
           .update({'full_name': fullName})
-          .eq('id', _requireUserId);
+          .eq('id', _requireUserId)
+          .timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
     } on SocketException {
       throw Exception('offline');
     } on PostgrestException catch (e) {
@@ -109,7 +131,7 @@ class SupabaseService {
     try {
       await _client.auth.updateUser(
         UserAttributes(data: {'full_name': fullName}),
-      );
+      ).timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
     } on SocketException {
       throw Exception('offline');
     } on AuthException catch (e) {
@@ -129,7 +151,8 @@ class SupabaseService {
           .from('profiles')
           .select('avatar_type, avatar_value')
           .eq('id', _requireUserId)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
       final type = row?['avatar_type'] as String?;
       final value = row?['avatar_value'] as String?;
       if (type == null || value == null) return null;
@@ -153,7 +176,10 @@ class SupabaseService {
       await _client.from('profiles').update({
         'avatar_type': avatarType,
         'avatar_value': avatarValue,
-      }).eq('id', _requireUserId);
+      }).eq('id', _requireUserId).timeout(
+        _networkTimeout,
+        onTimeout: () => throw const SocketException('timeout'),
+      );
     } on SocketException {
       throw Exception('offline');
     } on PostgrestException catch (e) {
@@ -177,7 +203,7 @@ class SupabaseService {
       await _client.auth.signInWithPassword(
         email: email,
         password: currentPassword,
-      );
+      ).timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
     } on SocketException {
       throw Exception('offline');
     } on AuthException catch (e) {
@@ -185,7 +211,9 @@ class SupabaseService {
     }
 
     try {
-      await _client.auth.updateUser(UserAttributes(password: newPassword));
+      await _client.auth
+          .updateUser(UserAttributes(password: newPassword))
+          .timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
     } on SocketException {
       throw Exception('offline');
     } on AuthException catch (e) {
@@ -206,7 +234,8 @@ class SupabaseService {
       final rows = await _client
           .from('scans')
           .select('classification')
-          .eq('user_id', _requireUserId);
+          .eq('user_id', _requireUserId)
+          .timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
 
       final classifications = (rows as List)
           .map((r) => r['classification'] as String)
@@ -249,7 +278,8 @@ class SupabaseService {
           .select()
           .eq('user_id', _requireUserId)
           .order('scanned_at', ascending: false)
-          .limit(limit);
+          .limit(limit)
+          .timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
       return List<Map<String, dynamic>>.from(rows as List);
     } on SocketException {
       throw Exception('offline');
@@ -267,7 +297,8 @@ class SupabaseService {
           .from('scans')
           .select()
           .eq('user_id', _requireUserId)
-          .order('scanned_at', ascending: false);
+          .order('scanned_at', ascending: false)
+          .timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
       return List<Map<String, dynamic>>.from(rows as List);
     } on SocketException {
       throw Exception('offline');
@@ -282,7 +313,11 @@ class SupabaseService {
   /// storage costs become a concern).
   Future<void> clearScanHistory() async {
     try {
-      await _client.from('scans').delete().eq('user_id', _requireUserId);
+      await _client
+          .from('scans')
+          .delete()
+          .eq('user_id', _requireUserId)
+          .timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
     } on SocketException {
       throw Exception('offline');
     } on PostgrestException catch (e) {

@@ -331,4 +331,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get successPasswordChanged => 'Password changed! You\'re all set.';
+
+  @override
+  String get offlineNoCache => 'You\'re offline. Showing what we could load.';
+
+  @override
+  String get retryButton => 'Retry';
+
+  @override
+  String get cacheAgeJustNow => 'just now';
+
+  @override
+  String cacheAgeMinutes(int count) {
+    return '${count}m ago';
+  }
+
+  @override
+  String cacheAgeHours(int count) {
+    return '${count}h ago';
+  }
+
+  @override
+  String cacheAgeDays(int count) {
+    return '${count}d ago';
+  }
+
+  @override
+  String dashboardOfflineCached(String age) {
+    return 'You\'re offline. Showing saved data from $age.';
+  }
+
+  @override
+  String dashboardRefreshFailedCached(String age) {
+    return 'Couldn\'t refresh. Showing saved data from $age.';
+  }
+
+  @override
+  String dashboardShowingCachedRefreshing(String age) {
+    return 'Showing saved data from $age — refreshing…';
+  }
+
+  @override
+  String get dashboardLoadFailed =>
+      'Couldn\'t load your dashboard. Pull down or tap retry.';
+
+  @override
+  String get retrySnackbarStillOffline => 'Still offline.';
+
+  @override
+  String get retrySnackbarCouldNotRefresh => 'Couldn\'t refresh.';
+
+  @override
+  String get retrySnackbarDashboardRefreshed => 'Dashboard refreshed.';
+
+  @override
+  String historyOfflineCached(String age) {
+    return 'You\'re offline. Showing saved history from $age.';
+  }
+
+  @override
+  String historyRefreshFailedCached(String age) {
+    return 'Couldn\'t refresh. Showing saved history from $age.';
+  }
+
+  @override
+  String get historyLoadFailed =>
+      'Couldn\'t load your scan history. Pull down or tap retry.';
+
+  @override
+  String get offlineSavedData => 'Offline · saved data';
 }

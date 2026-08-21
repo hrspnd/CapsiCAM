@@ -336,4 +336,74 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get successPasswordChanged => 'Nabago na ang iyong password!';
+
+  @override
+  String get offlineNoCache =>
+      'Naka-offline ka. Ipinapakita ang aming na-load.';
+
+  @override
+  String get retryButton => 'Retry';
+
+  @override
+  String get cacheAgeJustNow => 'ngayon lang';
+
+  @override
+  String cacheAgeMinutes(int count) {
+    return '${count}m nakalipas';
+  }
+
+  @override
+  String cacheAgeHours(int count) {
+    return '${count}h nakalipas';
+  }
+
+  @override
+  String cacheAgeDays(int count) {
+    return '${count}d nakalipas';
+  }
+
+  @override
+  String dashboardOfflineCached(String age) {
+    return 'Naka-offline ka. Ipinapakita ang naka-save na datos mula $age.';
+  }
+
+  @override
+  String dashboardRefreshFailedCached(String age) {
+    return 'Hindi na-refresh. Ipinapakita ang naka-save na datos mula $age.';
+  }
+
+  @override
+  String dashboardShowingCachedRefreshing(String age) {
+    return 'Ipinapakita ang naka-save na datos mula $age — nire-refresh…';
+  }
+
+  @override
+  String get dashboardLoadFailed =>
+      'Hindi ma-load ang iyong dashboard. Mag-pull down o pindutin ang retry.';
+
+  @override
+  String get retrySnackbarStillOffline => 'Naka-offline ka pa rin.';
+
+  @override
+  String get retrySnackbarCouldNotRefresh => 'Hindi na-refresh.';
+
+  @override
+  String get retrySnackbarDashboardRefreshed => 'Na-refresh ang dashboard.';
+
+  @override
+  String historyOfflineCached(String age) {
+    return 'Naka-offline ka. Ipinapakita ang naka-save na history mula $age.';
+  }
+
+  @override
+  String historyRefreshFailedCached(String age) {
+    return 'Hindi na-refresh. Ipinapakita ang naka-save na history mula $age.';
+  }
+
+  @override
+  String get historyLoadFailed =>
+      'Hindi ma-load ang iyong scan history. Mag-pull down o pindutin ang retry.';
+
+  @override
+  String get offlineSavedData => 'Offline · naka-save na datos';
 }

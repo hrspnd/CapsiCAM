@@ -715,6 +715,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password changed! You\'re all set.'**
   String get successPasswordChanged;
+
+  /// No description provided for @offlineNoCache.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Showing what we could load.'**
+  String get offlineNoCache;
+
+  /// No description provided for @retryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retryButton;
+
+  /// No description provided for @cacheAgeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get cacheAgeJustNow;
+
+  /// No description provided for @cacheAgeMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m ago'**
+  String cacheAgeMinutes(int count);
+
+  /// No description provided for @cacheAgeHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String cacheAgeHours(int count);
+
+  /// No description provided for @cacheAgeDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d ago'**
+  String cacheAgeDays(int count);
+
+  /// No description provided for @dashboardOfflineCached.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Showing saved data from {age}.'**
+  String dashboardOfflineCached(String age);
+
+  /// No description provided for @dashboardRefreshFailedCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh. Showing saved data from {age}.'**
+  String dashboardRefreshFailedCached(String age);
+
+  /// No description provided for @dashboardShowingCachedRefreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing saved data from {age} — refreshing…'**
+  String dashboardShowingCachedRefreshing(String age);
+
+  /// No description provided for @dashboardLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your dashboard. Pull down or tap retry.'**
+  String get dashboardLoadFailed;
+
+  /// No description provided for @retrySnackbarStillOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Still offline.'**
+  String get retrySnackbarStillOffline;
+
+  /// No description provided for @retrySnackbarCouldNotRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh.'**
+  String get retrySnackbarCouldNotRefresh;
+
+  /// No description provided for @retrySnackbarDashboardRefreshed.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard refreshed.'**
+  String get retrySnackbarDashboardRefreshed;
+
+  /// No description provided for @historyOfflineCached.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Showing saved history from {age}.'**
+  String historyOfflineCached(String age);
+
+  /// No description provided for @historyRefreshFailedCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh. Showing saved history from {age}.'**
+  String historyRefreshFailedCached(String age);
+
+  /// No description provided for @historyLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your scan history. Pull down or tap retry.'**
+  String get historyLoadFailed;
+
+  /// No description provided for @offlineSavedData.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline · saved data'**
+  String get offlineSavedData;
 }
 
 class _AppLocalizationsDelegate

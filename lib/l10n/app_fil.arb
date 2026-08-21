@@ -112,5 +112,50 @@
   "errorEmptyNewPassword": "Ilagay ang iyong bagong password.",
   "errorSamePassword": "Ang bagong password ay dapat iba sa kasalukuyang password.",
   "errorEmptyConfirmNewPassword": "Pakikumpirma ang iyong bagong password.",
-  "successPasswordChanged": "Nabago na ang iyong password!"
+  "successPasswordChanged": "Nabago na ang iyong password!",
+
+  "offlineNoCache": "Naka-offline ka. Ipinapakita ang aming na-load.",
+  "retryButton": "Retry",
+  "cacheAgeJustNow": "ngayon lang",
+  "cacheAgeMinutes": "{count}m nakalipas",
+  "@cacheAgeMinutes": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "cacheAgeHours": "{count}h nakalipas",
+  "@cacheAgeHours": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "cacheAgeDays": "{count}d nakalipas",
+  "@cacheAgeDays": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "dashboardOfflineCached": "Naka-offline ka. Ipinapakita ang naka-save na datos mula {age}.",
+  "@dashboardOfflineCached": {
+    "placeholders": { "age": { "type": "String" } }
+  },
+  "dashboardRefreshFailedCached": "Hindi na-refresh. Ipinapakita ang naka-save na datos mula {age}.",
+  "@dashboardRefreshFailedCached": {
+    "placeholders": { "age": { "type": "String" } }
+  },
+  "dashboardShowingCachedRefreshing": "Ipinapakita ang naka-save na datos mula {age} — nire-refresh…",
+  "@dashboardShowingCachedRefreshing": {
+    "placeholders": { "age": { "type": "String" } }
+  },
+  "dashboardLoadFailed": "Hindi ma-load ang iyong dashboard. Mag-pull down o pindutin ang retry.",
+  "retrySnackbarStillOffline": "Naka-offline ka pa rin.",
+  "retrySnackbarCouldNotRefresh": "Hindi na-refresh.",
+  "retrySnackbarDashboardRefreshed": "Na-refresh ang dashboard.",
+
+  "historyOfflineCached": "Naka-offline ka. Ipinapakita ang naka-save na history mula {age}.",
+  "@historyOfflineCached": {
+    "placeholders": { "age": { "type": "String" } }
+  },
+  "historyRefreshFailedCached": "Hindi na-refresh. Ipinapakita ang naka-save na history mula {age}.",
+  "@historyRefreshFailedCached": {
+    "placeholders": { "age": { "type": "String" } }
+  },
+  "historyLoadFailed": "Hindi ma-load ang iyong scan history. Mag-pull down o pindutin ang retry.",
+
+  "offlineSavedData": "Offline · naka-save na datos"
 }

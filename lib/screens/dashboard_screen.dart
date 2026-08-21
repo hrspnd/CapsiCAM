@@ -1,19 +1,36 @@
 // dashboard_screen.dart
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../constants.dart';
 import '../l10n/app_localizations.dart';
 import 'package:thesis_app/models/scan_result.dart';
 import 'package:thesis_app/services/supabase_service.dart';
 import 'package:thesis_app/services/scan_refresh_bus.dart';
 import 'package:thesis_app/services/profile_refresh_bus.dart';
+import 'package:thesis_app/services/cache_service.dart';
+import 'package:thesis_app/widgets/nav_item.dart';
+import 'package:thesis_app/widgets/scan_item.dart';
 import 'history_result_screen.dart'; // for HistoryResultArgs
 
 // ============================================================
 // DASHBOARD SCREEN
 // ============================================================
+
+/// Which offline/cache banner message is currently showing, if any.
+/// Stored instead of the resolved String itself so the actual text
+/// is (re)computed from AppLocalizations at build time — otherwise a
+/// language switch wouldn't retranslate a message that was already
+/// baked into state, and it'd sit stale until the next network/cache
+/// event overwrote it.
+enum _DashboardBannerKind {
+  offlineWithCache,
+  refreshFailedWithCache,
+  offlineNoCache,
+  loadFailedNoCache,
+  showingCachedRefreshing,
+}
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -25,12 +42,18 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   // ── Supabase data ─────────────────────────────────────────
   final _supabaseService = SupabaseService();
+  final _cacheService = CacheService();
 
   String _userName = '';
   int _totalScans = 0;
   int _totalHealthy = 0;
   String? _mostFrequentDisease; // raw classification, e.g. 'bacterial_leaf_spot'
   List<ScanResult> _recentScans = const [];
+
+  // True when the data currently on screen came from local cache
+  // rather than a fresh fetch (i.e. we're looking at a fallback).
+  bool _showingCachedData = false;
+  DateTime? _cachedAt;
 
   // Seeded with the schema defaults ('monogram' / '#F5A623') so the
   // header avatar never flashes something else before _loadAvatar
@@ -41,13 +64,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   bool _isLoading = true;
   bool _isOffline = false;
-  String? _errorMessage;
+  _DashboardBannerKind? _bannerKind;
+
+  // Guards against a slow cache read (see _seedFromCache) overwriting
+  // a network result that already came back — mirrors the same
+  // pattern used in account_screen.dart.
+  bool _hasResolvedOnce = false;
+
+  // True only while a manual "Retry" tap is in flight — distinct from
+  // the silent background refresh in _loadDashboard, which by design
+  // gives no visual feedback when cached content is already showing.
+  // A user-initiated retry needs its own explicit feedback or it
+  // looks like the tap did nothing.
+  bool _isRetrying = false;
 
   int _currentNavIndex = 1;
 
   @override
   void initState() {
     super.initState();
+    // Show cached data immediately (fast, local, no network round
+    // trip) while _loadDashboard tries to refresh in the background.
+    // Without this, a slow/offline network attempt leaves the screen
+    // on a blank spinner for however long that attempt takes, even
+    // though we may already have something useful to show.
+    _seedFromCache();
     _loadDashboard();
     _loadAvatar();
     ScanRefreshBus.listenable.addListener(_onScanRefreshSignal);
@@ -72,44 +113,142 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadAvatar();
   }
 
-  Future<void> _loadDashboard() async {
+  Future<void> _seedFromCache() async {
+    final cached = await _cacheService.loadDashboard();
+    if (!mounted || cached == null) return;
+    final cachedProfile = await _cacheService.loadProfile();
+    if (!mounted || _hasResolvedOnce) return; // network already answered
+
     setState(() {
-      _isLoading = true;
-      _isOffline = false;
-      _errorMessage = null;
+      if (cachedProfile?.data.fullName != null) {
+        _userName = cachedProfile!.data.fullName!;
+      }
+      _totalScans = cached.data.totalScans;
+      _totalHealthy = cached.data.totalHealthy;
+      _mostFrequentDisease = cached.data.mostFrequentDisease;
+      _recentScans = cached.data.recentScans;
+      _isLoading = false;
+      _showingCachedData = true;
+      _cachedAt = cached.cachedAt;
+      _bannerKind = _DashboardBannerKind.showingCachedRefreshing;
     });
+  }
+
+  Future<void> _loadDashboard() async {
+    // Only block the whole screen with a spinner if there's nothing
+    // on it yet (first-ever open, no cache). Otherwise — including
+    // when _seedFromCache already populated the screen — refresh
+    // quietly in the background instead of wiping visible content.
+    final hasContentOnScreen = _recentScans.isNotEmpty || _totalScans > 0;
+    if (!hasContentOnScreen) {
+      setState(() {
+        _isLoading = true;
+        _isOffline = false;
+        _bannerKind = null;
+      });
+    }
 
     try {
       final results = await Future.wait([
         _supabaseService.fetchFullName(),
         _supabaseService.fetchDashboardStats(),
         _supabaseService.fetchRecentScans(limit: 3),
-      ]);
+      ], eagerError: true);
 
       final fullName = results[0] as String?;
       final stats = results[1] as DashboardStats;
       final scanRows = results[2] as List<Map<String, dynamic>>;
 
+      final recentScans = scanRows.map(ScanResult.fromRow).toList();
+
+      _hasResolvedOnce = true;
       if (!mounted) return;
       setState(() {
         _userName = fullName ?? 'there';
         _totalScans = stats.totalScans;
         _totalHealthy = stats.totalHealthy;
         _mostFrequentDisease = stats.mostFrequentDisease;
-        _recentScans = scanRows.map(_scanFromRow).toList();
+        _recentScans = recentScans;
         _isLoading = false;
+        _showingCachedData = false;
+        _cachedAt = null;
+        _bannerKind = null;
       });
+
+      // Fire-and-forget: cache the fresh data for the next offline load.
+      // Uses 'there' as a neutral fallback rather than caching a null
+      // name, so a later offline read never shows something worse.
+      unawaited(_cacheService.saveDashboard(
+        totalScans: stats.totalScans,
+        totalHealthy: stats.totalHealthy,
+        mostFrequentDisease: stats.mostFrequentDisease,
+        recentScans: recentScans,
+      ));
+      if (fullName != null) {
+        unawaited(_cacheService.saveProfile(fullName: fullName));
+      }
     } catch (e) {
+      _hasResolvedOnce = true;
       if (!mounted) return;
       final isOffline = e.toString().contains('offline');
-      setState(() {
-        _isLoading = false;
-        _isOffline = isOffline;
-        _errorMessage = isOffline
-            ? "You're offline. Showing what we could load."
-            : "Couldn't load your dashboard. Pull down or tap retry.";
-      });
+      final cached = await _cacheService.loadDashboard();
+      final cachedProfile = await _cacheService.loadProfile();
+
+      if (!mounted) return;
+
+      if (cached != null) {
+        setState(() {
+          if (cachedProfile?.data.fullName != null) {
+            _userName = cachedProfile!.data.fullName!;
+          }
+          _totalScans = cached.data.totalScans;
+          _totalHealthy = cached.data.totalHealthy;
+          _mostFrequentDisease = cached.data.mostFrequentDisease;
+          _recentScans = cached.data.recentScans;
+          _isLoading = false;
+          _isOffline = isOffline;
+          _showingCachedData = true;
+          _cachedAt = cached.cachedAt;
+          _bannerKind = isOffline
+              ? _DashboardBannerKind.offlineWithCache
+              : _DashboardBannerKind.refreshFailedWithCache;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _isOffline = isOffline;
+          _showingCachedData = false;
+          _cachedAt = null;
+          _bannerKind = isOffline
+              ? _DashboardBannerKind.offlineNoCache
+              : _DashboardBannerKind.loadFailedNoCache;
+        });
+      }
     }
+  }
+
+  Future<void> _onRetryTap() async {
+    if (_isRetrying) return;
+    setState(() => _isRetrying = true);
+    await _loadDashboard();
+    if (!mounted) return;
+    setState(() => _isRetrying = false);
+
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          _bannerKind == null
+              ? l10n.retrySnackbarDashboardRefreshed
+              : (_isOffline
+                  ? l10n.retrySnackbarStillOffline
+                  : l10n.retrySnackbarCouldNotRefresh),
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _loadAvatar() async {
@@ -120,62 +259,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _avatarType = avatar.type;
         _avatarValue = avatar.value;
       });
+      unawaited(_cacheService.saveProfile(
+        avatarType: avatar.type,
+        avatarValue: avatar.value,
+      ));
     } catch (_) {
       // Non-critical: keep the default avatar rather than surfacing
-      // an error for what's ultimately a cosmetic lookup.
+      // an error for what's ultimately a cosmetic lookup. But if we
+      // have a previously cached avatar, prefer that over the
+      // schema-default placeholder.
+      final cachedProfile = await _cacheService.loadProfile();
+      if (!mounted) return;
+      if (cachedProfile?.data.avatarType != null &&
+          cachedProfile?.data.avatarValue != null) {
+        setState(() {
+          _avatarType = cachedProfile!.data.avatarType!;
+          _avatarValue = cachedProfile.data.avatarValue!;
+        });
+      }
     }
-  }
-
-  // ── Row → ScanResult mapping ───────────────────────────────
-
-  static const Map<String, String> _diseaseDisplayKeys = {
-    'healthy': 'Healthy',
-    'bacterial_leaf_spot': 'Bacterial_Leaf_Spot',
-    'cercospora_leaf_spot': 'Cercospora_Leaf_Spot',
-  };
-
-  ScanResult _scanFromRow(Map<String, dynamic> row) {
-    final classification = row['classification'] as String;
-
-    double confidence;
-    switch (classification) {
-      case 'healthy':
-        confidence = (row['confidence_healthy'] as num).toDouble();
-        break;
-      case 'bacterial_leaf_spot':
-        confidence = (row['confidence_bls'] as num).toDouble();
-        break;
-      case 'cercospora_leaf_spot':
-        confidence = (row['confidence_cls'] as num).toDouble();
-        break;
-      default:
-        confidence = 0.0;
-    }
-
-    final scannedAt = DateTime.parse(row['scanned_at'] as String).toLocal();
-
-    return ScanResult(
-      id: row['id'] as String,
-      disease: _diseaseDisplayKeys[classification] ?? classification,
-      imageSource: row['image_source'] == 'captured'
-          ? AppConstants.sourceScanned
-          : AppConstants.sourceUploaded,
-      date: DateFormat('MMM d, yyyy').format(scannedAt),
-      scannedAt: scannedAt,
-      confidence: confidence,
-      predictions: {
-        'Healthy': (row['confidence_healthy'] as num).toDouble(),
-        'Bacterial_Leaf_Spot': (row['confidence_bls'] as num).toDouble(),
-        'Cercospora_Leaf_Spot': (row['confidence_cls'] as num).toDouble(),
-      },
-      imagePath: row['image_url'] as String?,
-      heatmapPath: row['heatmap_url'] as String?,
-    );
   }
 
   void _onNavTap(int index) {
     if (index == _currentNavIndex) return;
-    // setState(() => _currentNavIndex = index);
     switch (index) {
       case 0:
         context.push(AppRoutes.scanHistory);
@@ -191,7 +297,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _mostFrequentDisplay(AppLocalizations l10n) {
     final key = _mostFrequentDisease;
     if (_totalScans == 0 || key == null) return 'None';
-    final display = _diseaseDisplayKeys[key] ?? key;
+    final display = ScanResult.diseaseDisplayKeys[key] ?? key;
     final words = display.split('_');
     if (words.length <= 1) return display;
     return '${words.first}\n${words.sublist(1).join(' ')}';
@@ -230,8 +336,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (_errorMessage != null) ...[
-                            _buildStatusBanner(colors),
+                          if (_bannerKind != null) ...[
+                            _buildStatusBanner(colors, l10n),
                             const SizedBox(height: AppSpacing.md),
                           ],
                           _buildActionButtons(colors, l10n),
@@ -252,7 +358,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // ── Status banner (offline / error) ─────────────────────────
 
-  Widget _buildStatusBanner(AppColors colors) {
+  /// Resolves [_bannerKind] to display text using the *current* build's
+  /// AppLocalizations — computed here rather than cached in state, so
+  /// switching language updates this banner immediately instead of
+  /// only on the next network/cache event.
+  String _bannerText(AppLocalizations l10n) {
+    final kind = _bannerKind;
+    if (kind == null) return '';
+    final age = _cachedAt != null ? formatCacheAge(_cachedAt!, l10n) : '';
+    switch (kind) {
+      case _DashboardBannerKind.offlineWithCache:
+        return l10n.dashboardOfflineCached(age);
+      case _DashboardBannerKind.refreshFailedWithCache:
+        return l10n.dashboardRefreshFailedCached(age);
+      case _DashboardBannerKind.offlineNoCache:
+        return l10n.offlineNoCache;
+      case _DashboardBannerKind.loadFailedNoCache:
+        return l10n.dashboardLoadFailed;
+      case _DashboardBannerKind.showingCachedRefreshing:
+        return l10n.dashboardShowingCachedRefreshing(age);
+    }
+  }
+
+  Widget _buildStatusBanner(AppColors colors, AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -264,28 +392,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         children: [
           Icon(
-            _isOffline ? Icons.wifi_off : Icons.error_outline,
+            _showingCachedData
+                ? Icons.cloud_off_outlined
+                : (_isOffline ? Icons.wifi_off : Icons.error_outline),
             size: 18,
             color: colors.textSecondary,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              _errorMessage ?? '',
+              _bannerText(l10n),
               style: TextStyle(fontSize: 12, color: colors.textSecondary),
             ),
           ),
           GestureDetector(
-            onTap: _loadDashboard,
-            child: Text(
-              'Retry',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: colors.primaryDark,
-                decoration: TextDecoration.underline,
-              ),
-            ),
+            onTap: _isRetrying ? null : _onRetryTap,
+            child: _isRetrying
+                ? SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.primaryDark,
+                    ),
+                  )
+                : Text(
+                    l10n.retryButton,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colors.primaryDark,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -435,7 +574,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 .map(
                   (scan) => Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                    child: _ScanItem(
+                    child: ScanItem(
                       scan: scan,
                       colors: colors,
                       onTap: () {
@@ -508,25 +647,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _NavItem(
+          NavItem(
             iconPath: AppAssets.historyIcon,
             label: 'History',
             isActive: _currentNavIndex == 0,
             onTap: () => _onNavTap(0),
           ),
-          _NavItem(
+          NavItem(
             iconPath: AppAssets.homeIcon,
             label: 'Home',
             isActive: _currentNavIndex == 1,
             onTap: () => _onNavTap(1),
-            iconSize: 22,
           ),
-          _NavItem(
+          NavItem(
             iconPath: AppAssets.accountIcon,
             label: 'Account',
             isActive: _currentNavIndex == 2,
             onTap: () => _onNavTap(2),
-            iconSize: 22,
           ),
         ],
       ),
@@ -597,7 +734,6 @@ class _ActionButton extends StatelessWidget {
                       color: colors.textPrimary,
                     ),
                   ),
-                  // const SizedBox(height: 2),
                   Text(
                     sublabel,
                     style: TextStyle(fontSize: 12, color: colors.textSecondary),
@@ -665,153 +801,6 @@ class _StatCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ScanItem extends StatelessWidget {
-  final ScanResult scan;
-  final VoidCallback onTap;
-  final AppColors colors;
-
-  const _ScanItem({
-    required this.scan,
-    required this.onTap,
-    required this.colors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final sourceLabel = scan.imageSource == AppConstants.sourceScanned
-        ? l10n.sourceScanned
-        : l10n.sourceUploaded;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.md,
-        ),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: colors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: colors.bgForDisease(scan.disease),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: scan.imagePath != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Image.network(
-                        scan.imagePath!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.eco_outlined,
-                          color: colors.forDisease(scan.disease),
-                          size: 24,
-                        ),
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
-                          return Center(
-                            child: SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          );
-                        },
-                      ),
-                    )
-                  : Icon(
-                      Icons.eco_outlined,
-                      color: colors.forDisease(scan.disease),
-                      size: 24,
-                    ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    scan.disease.replaceAll('_', ' '),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$sourceLabel · ${scan.date}',
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: colors.chevron, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-  final String? iconPath;
-  final double iconSize;
-
-  const _NavItem({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-    this.iconPath,
-    this.iconSize = 22,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive
-        ? Colors.white
-        : Colors.white.withValues(alpha: 0.45);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (iconPath != null)
-            Image.asset(
-              iconPath!,
-              width: 20,
-              height: 20,
-              color: color,
-              errorBuilder: (_, __, ___) =>
-                  Icon(Icons.history, color: color, size: 22),
-            ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              color: color,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ],
       ),
     );
   }

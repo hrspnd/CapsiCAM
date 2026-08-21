@@ -1,5 +1,6 @@
 // account_screen.dart
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants.dart';
@@ -9,6 +10,8 @@ import 'package:thesis_app/l10n/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thesis_app/services/supabase_service.dart';
 import 'package:thesis_app/services/profile_refresh_bus.dart';
+import 'package:thesis_app/services/cache_service.dart';
+import 'package:thesis_app/widgets/nav_item.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -20,9 +23,22 @@ class AccountScreen extends StatefulWidget {
 class _AccountScreenState extends State<AccountScreen> {
   // ── Supabase data ─────────────────────────────────────────
   final _supabaseService = SupabaseService();
+  final _cacheService = CacheService();
 
   late String _userName;
   late String _userEmail;
+
+  // True while what's on screen is a cached fallback rather than a
+  // value confirmed by a successful network fetch this session.
+  bool _showingCachedName = false;
+  bool _showingCachedAvatar = false;
+
+  // Guards so a slow network response can't overwrite a value that
+  // an even-slower cache read hasn't gotten to yet, and vice versa —
+  // once the network has answered for a field, cache seeding leaves
+  // it alone.
+  bool _profileFetchedFromNetwork = false;
+  bool _avatarFetchedFromNetwork = false;
 
   // Seeded with the schema defaults ('monogram' / '#F5A623') so the
   // profile-card avatar never flashes something else before
@@ -43,6 +59,7 @@ class _AccountScreenState extends State<AccountScreen> {
             true
         ? (user!.userMetadata!['full_name'] as String)
         : (user?.email?.split('@').first ?? 'User');
+    _seedFromCache();
     _loadProfile();
     _loadAvatar();
     ProfileRefreshBus.listenable.addListener(_onProfileRefreshSignal);
@@ -60,28 +77,71 @@ class _AccountScreenState extends State<AccountScreen> {
     _loadAvatar();
   }
 
+  /// Seeds name/avatar/email from local cache so the profile card
+  /// shows the user's real info offline instead of just the
+  /// metadata/email-derived guess. Only applied to fields the
+  /// network hasn't already answered for by the time this resolves.
+  Future<void> _seedFromCache() async {
+    final cached = await _cacheService.loadProfile();
+    if (!mounted || cached == null) return;
+    setState(() {
+      if (!_profileFetchedFromNetwork && cached.data.fullName != null) {
+        _userName = cached.data.fullName!;
+        _showingCachedName = true;
+      }
+      if (!_avatarFetchedFromNetwork &&
+          cached.data.avatarType != null &&
+          cached.data.avatarValue != null) {
+        _avatarType = cached.data.avatarType!;
+        _avatarValue = cached.data.avatarValue!;
+        _showingCachedAvatar = true;
+      }
+      if (_userEmail.isEmpty && cached.data.email != null) {
+        _userEmail = cached.data.email!;
+      }
+    });
+  }
+
   Future<void> _loadProfile() async {
     try {
       final fullName = await _supabaseService.fetchFullName();
-      if (!mounted || fullName == null || fullName.trim().isEmpty) return;
-      setState(() => _userName = fullName);
+      if (!mounted) return;
+      _profileFetchedFromNetwork = true;
+      if (fullName == null || fullName.trim().isEmpty) return;
+      setState(() {
+        _userName = fullName;
+        _showingCachedName = false;
+      });
+      unawaited(_cacheService.saveProfile(
+        fullName: fullName,
+        email: _userEmail.isNotEmpty ? _userEmail : null,
+      ));
     } catch (_) {
-      // Non-critical: keep the metadata/email-derived name we already
-      // have rather than surfacing an error for a profile-name lookup.
+      // Non-critical: keep whichever name is already on screen (the
+      // metadata/email-derived guess, or a cached value from
+      // _seedFromCache) rather than surfacing an error for a
+      // profile-name lookup.
     }
   }
 
   Future<void> _loadAvatar() async {
     try {
       final avatar = await _supabaseService.fetchAvatar();
-      if (!mounted || avatar == null) return;
+      if (!mounted) return;
+      _avatarFetchedFromNetwork = true;
+      if (avatar == null) return;
       setState(() {
         _avatarType = avatar.type;
         _avatarValue = avatar.value;
+        _showingCachedAvatar = false;
       });
+      unawaited(_cacheService.saveProfile(
+        avatarType: avatar.type,
+        avatarValue: avatar.value,
+      ));
     } catch (_) {
-      // Non-critical: keep the default avatar rather than surfacing
-      // an error for what's ultimately a cosmetic lookup.
+      // Non-critical: keep the default/cached avatar rather than
+      // surfacing an error for what's ultimately a cosmetic lookup.
     }
   }
 
@@ -104,10 +164,6 @@ class _AccountScreenState extends State<AccountScreen> {
     if (mode == ThemeMode.system) return 'System';
     return 'Light';
   }
-
-  // ── Language ──────────────────────────────────────────────
-  // TODO: Replace with LanguageProvider when language mode is implemented
-  String _currentLanguage = 'English';
 
   // ── Nav index ─────────────────────────────────────────────
   final int _currentNavIndex = 2;
@@ -302,7 +358,6 @@ class _AccountScreenState extends State<AccountScreen> {
                     return GestureDetector(
                       onTap: () {
                         setSheetState(() => selected = option);
-                        setState(() => _currentLanguage = option);
 
                         context.read<ThemeProvider>().setLocale(
                           option == 'Filipino'
@@ -513,7 +568,7 @@ class _AccountScreenState extends State<AccountScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildProfileCard(colors),
+                  _buildProfileCard(colors, l10n),
                   const SizedBox(height: AppSpacing.lg),
                   _buildSectionLabel(l10n.appSettings, colors),
                   const SizedBox(height: AppSpacing.sm),
@@ -567,7 +622,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     child: ElevatedButton(
                       onPressed: () => _showLogOutDialog(colors),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFA63C1D),
+                        backgroundColor: colors.danger,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSpacing.md,
@@ -622,7 +677,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   // ── Profile card ──────────────────────────────────────────
-  Widget _buildProfileCard(AppColors colors) {
+  Widget _buildProfileCard(AppColors colors, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -656,6 +711,27 @@ class _AccountScreenState extends State<AccountScreen> {
                   _userEmail,
                   style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
+                if (_showingCachedName || _showingCachedAvatar) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.cloud_off_outlined,
+                        size: 11,
+                        color: colors.textSecondary,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        l10n.offlineSavedData,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -733,25 +809,23 @@ class _AccountScreenState extends State<AccountScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _NavItem(
+          NavItem(
             iconPath: AppAssets.historyIcon,
             label: 'History',
             isActive: _currentNavIndex == 0,
             onTap: () => _onNavTap(0),
           ),
-          _NavItem(
+          NavItem(
             iconPath: AppAssets.homeIcon,
             label: 'Home',
             isActive: _currentNavIndex == 1,
             onTap: () => _onNavTap(1),
-            iconSize: 22,
           ),
-          _NavItem(
+          NavItem(
             iconPath: AppAssets.accountIcon,
             label: 'Account',
             isActive: _currentNavIndex == 2,
             onTap: () => _onNavTap(2),
-            iconSize: 22,
           ),
         ],
       ),
@@ -830,54 +904,6 @@ class _SettingsRow extends StatelessWidget {
             Icon(Icons.chevron_right, color: colors.chevron, size: 18),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-  final String? iconPath;
-  final double iconSize;
-
-  const _NavItem({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-    this.iconPath,
-    this.iconSize = 22,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive ? Colors.white : Colors.white.withOpacity(0.45);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (iconPath != null)
-            Image.asset(
-              iconPath!,
-              width: 20,
-              height: 20,
-              color: color,
-              errorBuilder: (_, __, ___) =>
-                  Icon(Icons.history, color: color, size: 22),
-            ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              color: color,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ],
       ),
     );
   }
