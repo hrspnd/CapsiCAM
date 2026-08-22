@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image/image.dart' as img;
 import '../constants.dart';
 import '../l10n/app_localizations.dart';
@@ -46,27 +48,42 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
     'Healthy_Leaf': 'Healthy',
   };
 
-  static const _tipSeenKey = 'capture_tips_seen';
+  static const _tipSeenKeyPrefix = 'capture_tips_seen_';
+
+  /// SharedPreferences key scoped to the *signed-in account*, not just
+  /// the device — so the tip correctly shows once per real user
+  /// (survives logout/login on the same account) instead of once per
+  /// device install (which would either skip it for a second account
+  /// on the same phone, or reset it if local storage ever gets
+  /// cleared on logout).
+  String get _tipSeenKey {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    return '$_tipSeenKeyPrefix${userId ?? 'anonymous'}';
+  }
 
   // ── Lifecycle ─────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-    // WidgetsBinding.instance.addPostFrameCallback((_) => _showTipsIfFirstTime()); //temporary -- uncomment later
-    WidgetsBinding.instance.addPostFrameCallback((_) => _showTipsDialog());
+    // Show the "Before You Scan" tips only the first time the
+    // currently-signed-in account ever opens this screen — tracked
+    // per-user in SharedPreferences (see _tipSeenKey) so it survives
+    // app restarts and logout/login on the same account, without
+    // needing to be re-seen just because someone logged out.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showTipsIfFirstTime());
     _classifier.loadModel();
   }
 
-  //TEMPORARY (UNCOMMENT PAG GAGAWIN NA FIRST TIME YUNG TIPS)
-  // Future<void> _showTipsIfFirstTime() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   final seen = prefs.getBool(_tipSeenKey) ?? false;
-  //   if (!seen && mounted) {
-  //     await _showTipsDialog();
-  //     await prefs.setBool(_tipSeenKey, true);
-  //   }
-  // }
+  Future<void> _showTipsIfFirstTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool(_tipSeenKey) ?? false;
+    debugPrint('[tips] key=$_tipSeenKey seen=$seen currentUserId=${Supabase.instance.client.auth.currentUser?.id}');
+    if (!seen && mounted) {
+      await _showTipsDialog();
+      await prefs.setBool(_tipSeenKey, true);
+    }
+  }
 
   Future<void> _showTipsDialog() async {
     final colors = AppColors.of(context);

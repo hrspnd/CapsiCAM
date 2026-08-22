@@ -1,5 +1,6 @@
 // signup_screen.dart
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants.dart';
@@ -116,7 +117,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (!mounted) return;
       _showSuccessBanner();
-      await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 3));
       if (!mounted) return;
       context.go(AppRoutes.dashboard);
     } on AuthException catch (e) {
@@ -132,10 +133,20 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _showSuccessBanner() {
-  final colors = AppColors.of(context);
-  final l10n   = AppLocalizations.of(context)!;
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    // Clear out any lingering/queued snack bars first so we're never
+    // dismissing (or leaving behind) the wrong one.
+    messenger.clearSnackBars();
+
+    // Keep a handle to *this specific* snack bar instance so both the
+    // OK button and our manual timer close exactly this one.
+    late final ScaffoldFeatureController<SnackBar, SnackBarClosedReason>
+        controller;
+
+    controller = messenger.showSnackBar(
       SnackBar(
         backgroundColor: colors.primaryLightest,
         behavior: SnackBarBehavior.floating,
@@ -149,6 +160,11 @@ class _SignupScreenState extends State<SignupScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
+        // NOTE: SnackBar's built-in `duration` auto-dismiss is skipped
+        // by Flutter when accessible/screen-reader navigation is on,
+        // and can also get cut short by rebuilds. We don't rely on it —
+        // see the Timer below, which force-closes this exact snack bar
+        // after 3 seconds regardless.
         duration: const Duration(seconds: 3),
         content: Row(
           children: [
@@ -169,10 +185,12 @@ class _SignupScreenState extends State<SignupScreen> {
         action: SnackBarAction(
           label: 'OK',
           textColor: colors.primaryDark,
-          onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+          onPressed: () => controller.close(),
         ),
       ),
     );
+
+    Timer(const Duration(seconds: 4), () => controller.close());
   }
 
   void _handleSupabaseError(String message) {

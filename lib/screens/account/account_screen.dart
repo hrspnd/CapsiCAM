@@ -538,6 +538,15 @@ class _AccountScreenState extends State<AccountScreen> {
     // Close the confirmation dialog first.
     Navigator.pop(dialogContext);
 
+    // Clear this user's cached data before signing out — CacheService
+    // scopes keys by the current user's ID, and once signed out,
+    // currentUser is null, so it can no longer resolve which entries
+    // were this user's. The per-user key scoping is what actually
+    // prevents the next login from seeing this data; this call is
+    // just hygiene so a device used for multiple test accounts
+    // doesn't accumulate stale entries forever.
+    await _cacheService.clearForCurrentUser();
+
     try {
       await Supabase.instance.client.auth.signOut();
     } catch (e, stackTrace) {

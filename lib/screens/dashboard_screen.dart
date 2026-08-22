@@ -474,7 +474,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               avatarValue: _avatarValue,
               diameter: 44,
               initials:
-                  _userName.split(' ').where((e) => e.isNotEmpty).map((e) => e[0]).take(2).join(),
+                  _userName.split(' ').where((e) => e.isNotEmpty).map((e) => e[0]).take(2).join().toUpperCase(),
             ),
           ),
         ],
@@ -486,8 +486,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildActionButtons(AppColors colors, AppLocalizations l10n) {
     return _ActionButton(
-      label: 'Capture Image',
-      sublabel: 'Capture or upload image to scan',
+      label: l10n.captureImage,
+      sublabel: l10n.captureUpload,
       iconPath: AppAssets.liveCameraIcon,
       colors: colors,
       onTap: () => context.push(AppRoutes.captureImage),
@@ -604,6 +604,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildEmptyState(AppColors colors, AppLocalizations l10n) {
     return Container(
       width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),

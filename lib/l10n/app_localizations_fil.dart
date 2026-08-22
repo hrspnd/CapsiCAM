@@ -91,7 +91,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get scanHistoryEmpty =>
-      'Ang iyong kasaysayan ng pag-scan ay lilitaw dito.\nPindutin ang isang button sa itaas para magsimula.';
+      'Ang iyong kasaysayan ng pag-scan ay lilitaw dito.Pindutin ang isang button sa itaas para magsimula.';
 
   @override
   String get scanHistoryTitle => 'Scan History';

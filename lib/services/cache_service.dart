@@ -12,6 +12,7 @@
 
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thesis_app/models/scan_result.dart';
 import 'package:thesis_app/l10n/app_localizations.dart';
 
@@ -25,9 +26,19 @@ class Cached<T> {
 }
 
 class CacheService {
-  static const _profileKey = 'cache_profile_v1';
-  static const _dashboardKey = 'cache_dashboard_v1';
-  static const _historyKey = 'cache_history_v1';
+  // Every key is scoped by the current user's ID. Without this, User
+  // B's screens would seed themselves from User A's leftover cached
+  // data immediately after login (before B's own fresh fetch
+  // completes) — exactly the "old user's info flashes on screen"
+  // symptom this class was causing. Falls back to a fixed suffix if
+  // somehow called with nobody signed in, which shouldn't normally
+  // happen since these are only used from authenticated screens.
+  String get _userScope =>
+      Supabase.instance.client.auth.currentUser?.id ?? 'anonymous';
+
+  String get _profileKey => 'cache_profile_v1:$_userScope';
+  String get _dashboardKey => 'cache_dashboard_v1:$_userScope';
+  String get _historyKey => 'cache_history_v1:$_userScope';
 
   // ── Profile (name, email, avatar) ───────────────────────────
   // Shared by the dashboard header and the account screen so both
@@ -161,6 +172,21 @@ class CacheService {
   /// reappear from cache after an offline restart.
   Future<void> clearHistory() async {
     final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_historyKey);
+  }
+
+  /// Wipes every cache entry for the currently signed-in user. Call
+  /// this at logout, *before* Supabase's sign-out completes — once
+  /// signed out, currentUser is null and _userScope can no longer
+  /// resolve which entries belong to this user. Keys are already
+  /// scoped per-user, so a different account logging in afterward
+  /// wouldn't see this data anyway; this is just hygiene so a device
+  /// used for many test accounts doesn't accumulate stale entries
+  /// forever.
+  Future<void> clearForCurrentUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_profileKey);
+    await prefs.remove(_dashboardKey);
     await prefs.remove(_historyKey);
   }
 }

@@ -114,9 +114,6 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   }
 
   void _onBack() {
-    if (_hasChanges) {
-      ProfileRefreshBus.notify();
-    }
     context.pop();
   }
 
@@ -659,7 +656,20 @@ void _showDisplayNameSuccessSnackbar(AppColors colors) {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
+    // Wrapping in PopScope (rather than only notifying inside the
+    // in-app back-arrow's onTap) makes sure the dashboard gets told
+    // to refresh no matter HOW this screen is left — tapping the
+    // arrow, swiping back, or the Android hardware back button. All
+    // of those trigger a pop, and PopScope is the one hook that
+    // fires for all of them.
+    return PopScope<Object?>(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop && _hasChanges) {
+          ProfileRefreshBus.notify();
+        }
+      },
+      child: Scaffold(
       backgroundColor: colors.background,
       body: Column(
         children: [
@@ -769,6 +779,7 @@ void _showDisplayNameSuccessSnackbar(AppColors colors) {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -869,6 +880,11 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
   String? _currentError;
   String? _newError;
   String? _confirmError;
+
+  // ── Obscure/visibility state (per field) ────────────────────
+  bool _obscureCurrent = true;
+  bool _obscureNew     = true;
+  bool _obscureConfirm = true;
 
   @override
   void dispose() {
@@ -1024,6 +1040,9 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
             controller: _currentController,
             errorText: _currentError,
             colors: colors,
+            obscureText: _obscureCurrent,
+            onToggleObscure: () =>
+                setState(() => _obscureCurrent = !_obscureCurrent),
             onChanged: (_) {
               if (_currentError != null) setState(() => _currentError = null);
             },
@@ -1034,6 +1053,9 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
             controller: _newController,
             errorText: _newError,
             colors: colors,
+            obscureText: _obscureNew,
+            onToggleObscure: () =>
+                setState(() => _obscureNew = !_obscureNew),
             onChanged: (_) {
               if (_newError != null) setState(() => _newError = null);
             },
@@ -1044,6 +1066,9 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
             controller: _confirmController,
             errorText: _confirmError,
             colors: colors,
+            obscureText: _obscureConfirm,
+            onToggleObscure: () =>
+                setState(() => _obscureConfirm = !_obscureConfirm),
             onChanged: (_) {
               if (_confirmError != null) setState(() => _confirmError = null);
             },
@@ -1088,6 +1113,8 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
     required TextEditingController controller,
     required AppColors colors,
     required ValueChanged<String> onChanged,
+    required bool obscureText,
+    required VoidCallback onToggleObscure,
     String? errorText,
   }) {
     return Column(
@@ -1095,7 +1122,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
       children: [
         TextField(
           controller: controller,
-          obscureText: true,
+          obscureText: obscureText,
           onChanged: onChanged,
           style: TextStyle(fontSize: 14, color: colors.textPrimary),
           decoration: InputDecoration(
@@ -1109,6 +1136,16 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
             focusedBorder: UnderlineInputBorder(
               borderSide: BorderSide(
                 color: errorText != null ? colors.danger : colors.primary,
+              ),
+            ),
+            suffixIcon: GestureDetector(
+              onTap: onToggleObscure,
+              child: Icon(
+                obscureText
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: colors.textSecondary,
+                size: 20,
               ),
             ),
           ),

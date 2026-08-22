@@ -40,6 +40,16 @@ class SupabaseService {
   // CacheService) kick in promptly rather than after a long stall.
   static const _networkTimeout = Duration(seconds: 8);
 
+  // Auth operations (sign up, sign in, password change) go through
+  // Supabase's GoTrue server, which does real password hashing and
+  // often dispatches email as part of the same request — legitimately
+  // slower than a simple table read even on a good connection. A
+  // user actively watching a "Signing up..." spinner should get to
+  // wait longer than a passive background refresh should, so these
+  // get a longer timeout to avoid misreporting a slow-but-working
+  // connection as 'offline'.
+  static const _authNetworkTimeout = Duration(seconds: 20);
+
   Future<void> signUpWithEmail({
     required String fullName,
     required String email,
@@ -52,7 +62,7 @@ class SupabaseService {
         data: {
           'full_name': fullName,
         },
-      ).timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
+      ).timeout(_authNetworkTimeout, onTimeout: () => throw const SocketException('timeout'));
 
       if (response.user == null || response.session == null) {
         throw Exception('Sign up failed. Please try again.');
@@ -72,7 +82,7 @@ class SupabaseService {
       final response = await _client.auth.signInWithPassword(
         email: email,
         password: password,
-      ).timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
+      ).timeout(_authNetworkTimeout, onTimeout: () => throw const SocketException('timeout'));
 
       if (response.user == null || response.session == null) {
         throw Exception('Login failed. Please try again.');
@@ -111,10 +121,17 @@ class SupabaseService {
     }
   }
 
-  /// Updates the current user's display name in the `profiles` table.
-  /// Also mirrors it into the auth user's metadata so it's available
-  /// immediately (e.g. right after sign-in, before `profiles` is
-  /// fetched) without needing another round trip.
+  /// Updates the current user's display name in the `profiles` table
+  /// — the source of truth `fetchFullName()` reads back from.
+  ///
+  /// Also *best-effort* mirrors it into the auth user's metadata so
+  /// it's available immediately (e.g. right after sign-in, before
+  /// `profiles` is fetched) without needing another round trip. This
+  /// mirror step is a convenience, not the source of truth, so a
+  /// failure here (timeout, flaky connection, etc.) must not cause
+  /// the caller to see an error when the actual `profiles` save
+  /// already succeeded — that previously made the UI show "Something
+  /// went wrong" even though the name had, in fact, saved.
   Future<void> updateFullName(String fullName) async {
     try {
       await _client
@@ -128,17 +145,18 @@ class SupabaseService {
       throw Exception('Could not update name: ${e.message}');
     }
 
+    // The profiles row is already saved at this point — everything
+    // below is a non-critical convenience mirror, so we swallow any
+    // failure here instead of rethrowing.
     try {
       await _client.auth.updateUser(
         UserAttributes(data: {'full_name': fullName}),
-      ).timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
-    } on SocketException {
-      throw Exception('offline');
-    } on AuthException catch (e) {
-      // The profiles row already saved successfully at this point, so
-      // don't fail the whole operation over the metadata mirror — just
-      // surface it as a non-fatal exception for the caller to decide on.
-      throw Exception('Name saved, but could not sync account info: ${e.message}');
+      ).timeout(_authNetworkTimeout, onTimeout: () => throw const SocketException('timeout'));
+    } catch (_) {
+      // Non-fatal: profiles.full_name (the source of truth) already
+      // saved successfully. Losing the auth-metadata mirror just
+      // means the very next cold start might briefly show the old
+      // name from metadata before profiles is fetched — harmless.
     }
   }
 
@@ -203,7 +221,7 @@ class SupabaseService {
       await _client.auth.signInWithPassword(
         email: email,
         password: currentPassword,
-      ).timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
+      ).timeout(_authNetworkTimeout, onTimeout: () => throw const SocketException('timeout'));
     } on SocketException {
       throw Exception('offline');
     } on AuthException catch (e) {
@@ -213,7 +231,7 @@ class SupabaseService {
     try {
       await _client.auth
           .updateUser(UserAttributes(password: newPassword))
-          .timeout(_networkTimeout, onTimeout: () => throw const SocketException('timeout'));
+          .timeout(_authNetworkTimeout, onTimeout: () => throw const SocketException('timeout'));
     } on SocketException {
       throw Exception('offline');
     } on AuthException catch (e) {
