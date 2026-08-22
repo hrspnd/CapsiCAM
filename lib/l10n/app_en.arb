@@ -59,6 +59,8 @@
   "uploadFromGallery": "Upload from Gallery",
   "chooseDifferentPhoto": "Choose Different Photo",
   "analyzeButton": "Analyze",
+  "notSavedToHistory": "Not saved to history",
+  "scanResultsShownBelow": "Your scan result is still shown below, but couldn't be saved to your history.",
 
   "beforeYouScan": "Before you scan",
   "tipsSubtitle": "A few tips for the best results",

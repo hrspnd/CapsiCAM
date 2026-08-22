@@ -171,6 +171,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyzeButton => 'Analyze';
 
   @override
+  String get notSavedToHistory => 'Not saved to history';
+
+  @override
+  String get scanResultsShownBelow =>
+      'Your scan result is still shown below, but couldn\'t be saved to your history.';
+
+  @override
   String get beforeYouScan => 'Before you scan';
 
   @override

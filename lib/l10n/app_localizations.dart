@@ -416,6 +416,18 @@ abstract class AppLocalizations {
   /// **'Analyze'**
   String get analyzeButton;
 
+  /// No description provided for @notSavedToHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Not saved to history'**
+  String get notSavedToHistory;
+
+  /// No description provided for @scanResultsShownBelow.
+  ///
+  /// In en, this message translates to:
+  /// **'Your scan result is still shown below, but couldn\'t be saved to your history.'**
+  String get scanResultsShownBelow;
+
   /// No description provided for @beforeYouScan.
   ///
   /// In en, this message translates to:

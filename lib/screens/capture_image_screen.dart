@@ -1,5 +1,6 @@
 // capture_image_screen.dart
 
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -167,9 +168,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
         await _scanService.saveScan(args);
       } catch (saveError) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Scan analyzed but not saved: $saveError')),
-          );
+          _showScanNotSavedSnackbar();
         }
       }
 
@@ -197,6 +196,101 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
   }
 
   void _onBack() => context.pop();
+
+  /// Warns the user their result wasn't saved to their scan history,
+  /// without blocking navigation — the analysis itself already
+  /// succeeded, this is purely an informational heads-up.
+  void _showScanNotSavedSnackbar() {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Clear any lingering/queued snack bars first so we're never
+    // dismissing (or leaving behind) the wrong one.
+    messenger.clearSnackBars();
+
+    // Keep a handle to *this specific* snack bar instance so both the
+    // OK button and our manual timer close exactly this one.
+    late final ScaffoldFeatureController<SnackBar, SnackBarClosedReason>
+        controller;
+
+    controller = messenger.showSnackBar(
+      SnackBar(
+        backgroundColor: colors.surface,
+        behavior: SnackBarBehavior.floating,
+        elevation: 4,
+        margin: EdgeInsets.only(
+          left: AppSpacing.md,
+          right: AppSpacing.md,
+          bottom: MediaQuery.of(context).padding.bottom + AppSpacing.lg,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(color: colors.danger.withValues(alpha: 0.3)),
+        ),
+        // NOTE: SnackBar's built-in `duration` auto-dismiss can be
+        // skipped by Flutter (e.g. accessible/screen-reader
+        // navigation) or preempted by a rebuild. We don't rely on it
+        // alone — see the Timer below, which force-closes this exact
+        // snack bar after 4 seconds regardless.
+        duration: const Duration(seconds: 5),
+        content: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: colors.danger.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.cloud_off_rounded,
+                color: colors.danger,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.notSavedToHistory,
+                    style: TextStyle(
+                      fontFamily: 'Onest',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.scanResultsShownBelow,
+                    style: TextStyle(
+                      fontFamily: 'Onest',
+                      fontSize: 12,
+                      color: colors.textSecondary,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: colors.danger,
+          onPressed: () => controller.close(),
+        ),
+      ),
+    );
+
+    // Belt-and-suspenders: force-dismiss after exactly 4 seconds if
+    // the user hasn't already tapped OK.
+    Timer(const Duration(seconds: 4), () => controller.close());
+  }
 
   // ── Build ─────────────────────────────────────────────────
 

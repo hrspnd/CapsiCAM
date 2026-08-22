@@ -30,7 +30,7 @@
   "mostFrequent": "Pinakamadalas",
   "recentScans": "Mga Huling Scan",
   "viewAll": "Tingnan Lahat",
-  "scanHistoryEmpty": "Ang iyong kasaysayan ng pag-scan ay lilitaw dito.Pindutin ang isang button sa itaas para magsimula.",
+  "scanHistoryEmpty": "Ang iyong kasaysayan ng pag-scan ay lilitaw dito. Pindutin ang isang button sa itaas para magsimula.",
 
   "scanHistoryTitle": "Scan History",
   "sourceScanned": "Na-capture",
@@ -57,6 +57,8 @@
   "uploadFromGallery": "Mag-upload mula sa gallery",
   "chooseDifferentPhoto": "Pumili ng Ibang Larawan",
   "analyzeButton": "Suriin",
+  "notSavedToHistory": "Hindi na-save sa history",
+  "scanResultsShownBelow": "Makikita pa rin ang resulta ng iyong scan sa ibaba, pero hindi ito na-save sa iyong history.",
 
   "beforeYouScan": "Bago mag-scan",
   "tipsSubtitle": "Ilang tip para sa pinakamaayos na resulta",

@@ -91,7 +91,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get scanHistoryEmpty =>
-      'Ang iyong kasaysayan ng pag-scan ay lilitaw dito.Pindutin ang isang button sa itaas para magsimula.';
+      'Ang iyong kasaysayan ng pag-scan ay lilitaw dito. Pindutin ang isang button sa itaas para magsimula.';
 
   @override
   String get scanHistoryTitle => 'Scan History';
@@ -170,6 +170,13 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get analyzeButton => 'Suriin';
+
+  @override
+  String get notSavedToHistory => 'Hindi na-save sa history';
+
+  @override
+  String get scanResultsShownBelow =>
+      'Makikita pa rin ang resulta ng iyong scan sa ibaba, pero hindi ito na-save sa iyong history.';
 
   @override
   String get beforeYouScan => 'Bago mag-scan';
