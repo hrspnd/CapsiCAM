@@ -368,6 +368,12 @@ abstract class AppLocalizations {
   /// **'Back to Home'**
   String get backToHome;
 
+  /// No description provided for @healthyWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This app only detects a specific set of diseases. A \'Healthy\' result means none of those were found, not that the plant has no problems.'**
+  String get healthyWarning;
+
   /// No description provided for @captureButton.
   ///
   /// In en, this message translates to:

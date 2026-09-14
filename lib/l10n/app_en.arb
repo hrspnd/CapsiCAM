@@ -50,6 +50,7 @@
   "pointsOfInterest": "Points of Interest",
   "heatmapCaption": "Red areas show where the disease was found",
   "backToHome": "Back to Home",
+  "healthyWarning": "This app only detects a specific set of diseases. A 'Healthy' result means none of those were found, not that the plant has no problems.",
 
   "captureButton": "Capture",
   "noImageSelected": "No image selected",

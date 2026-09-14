@@ -146,6 +146,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backToHome => 'Back to Home';
 
   @override
+  String get healthyWarning =>
+      'This app only detects a specific set of diseases. A \'Healthy\' result means none of those were found, not that the plant has no problems.';
+
+  @override
   String get captureButton => 'Capture';
 
   @override

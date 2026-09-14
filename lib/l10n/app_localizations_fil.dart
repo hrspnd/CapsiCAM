@@ -147,6 +147,10 @@ class AppLocalizationsFil extends AppLocalizations {
   String get backToHome => 'Bumalik sa Home';
 
   @override
+  String get healthyWarning =>
+      'Tumutukoy lang ang app na ito sa ilang partikular na sakit. Ang resultang \'Healthy\' ay nangangahulugang wala sa mga ito ang natagpuan, hindi ibig sabihin na wala nang problema ang halaman.';
+
+  @override
   String get captureButton => 'Picturan';
 
   @override

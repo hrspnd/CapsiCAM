@@ -41,6 +41,8 @@ class AppColors {
       isDark ? const Color(0x801A1A1A) : const Color(0xFFF5F5F0);
   Color get buttonBg =>
       isDark ? const Color(0xFF2C9585) : const Color(0xFF0F6E56);
+  Color get healthyDisclaimer =>
+      isDark ? const Color(0xFF151515) : const Color(0xFFEBEBEB);
 
   // ── text ───────────────────────────────
   Color get textPrimary =>

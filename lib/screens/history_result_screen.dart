@@ -197,6 +197,7 @@ class HistoryResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -216,6 +217,10 @@ class HistoryResultScreen extends StatelessWidget {
                     _buildLeafImage(context, colors),
                     const SizedBox(height: AppSpacing.lg),
                     _buildDiagnosisChip(colors),
+                    if (args.label == 'Healthy') ...[
+                      const SizedBox(height: AppSpacing.md),
+                      _buildHealthyDisclaimer(colors, l10n),
+                    ],
                     const SizedBox(height: AppSpacing.lg),
                     _buildInfoAndHeatmapRow(context, colors),
                     const SizedBox(height: AppSpacing.lg),
@@ -344,6 +349,65 @@ class HistoryResultScreen extends StatelessWidget {
                 color: colors.textWhite,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Healthy-result disclaimer ─────────────────────────────
+
+  /// Shown only when the diagnosis is "Healthy" — clarifies that this
+  /// means none of the diseases the model was trained on were
+  /// detected, not that the plant is guaranteed problem-free.
+  Widget _buildHealthyDisclaimer(AppColors colors, AppLocalizations l10n) {
+    // Splits the localized string around the literal "'Healthy'" so
+    // just that word can be italicized, while the rest of the
+    // sentence stays fully translatable via l10n.healthyWarning. If
+    // the ARB text is ever edited and no longer contains this exact
+    // substring, falls back to showing the plain string rather than
+    // assuming a match that isn't there.
+    const target = "'Healthy'";
+    final fullText = l10n.healthyWarning;
+    final parts = fullText.split(target);
+    final baseStyle = TextStyle(
+      fontSize: 10,
+      fontFamily: 'Onest',
+      color: colors.textSecondary,
+      height: 1.4,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: colors.healthyDisclaimer,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 18, color: colors.textSecondary),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: parts.length == 2
+                ? Text.rich(
+                    TextSpan(
+                      style: baseStyle,
+                      children: [
+                        TextSpan(text: parts[0]),
+                        TextSpan(
+                          text: target,
+                          style: const TextStyle(
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        TextSpan(text: parts[1]),
+                      ],
+                    ),
+                  )
+                : Text(fullText, style: baseStyle),
           ),
         ],
       ),
