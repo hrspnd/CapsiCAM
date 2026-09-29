@@ -79,7 +79,9 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
   Future<void> _showTipsIfFirstTime() async {
     final prefs = await SharedPreferences.getInstance();
     final seen = prefs.getBool(_tipSeenKey) ?? false;
-    debugPrint('[tips] key=$_tipSeenKey seen=$seen currentUserId=${Supabase.instance.client.auth.currentUser?.id}');
+    debugPrint(
+      '[tips] key=$_tipSeenKey seen=$seen currentUserId=${Supabase.instance.client.auth.currentUser?.id}',
+    );
     if (!seen && mounted) {
       await _showTipsDialog();
       await prefs.setBool(_tipSeenKey, true);
@@ -135,11 +137,15 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
     setState(() => _isAnalyzing = true);
 
     try {
-      await _classifier.loadModel(); // no-op if already loaded
+      await _classifier.loadModel();
 
       final result = await _classifier.classify(_selectedImage!);
 
-      // Translate model output names -> app's existing naming convention
+      if (result.confidence <= 0.70) {
+        if (mounted) _showLowConfidenceDialog();
+        return;
+      }
+
       final translatedLabel =
           _modelToAppClassName[result.predictedClass] ?? result.predictedClass;
       final translatedPredictions = <String, double>{
@@ -147,8 +153,6 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
           (_modelToAppClassName[entry.key] ?? entry.key): entry.value,
       };
 
-      // Save the heatmap overlay to a real file, since ScanResultsScreen
-      // needs a file path (see Image.file fix noted separately)
       final heatmapPath = await _saveHeatmapToFile(result.heatmapOverlay);
 
       final args = ScanResultsArgs(
@@ -161,9 +165,6 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
         heatmapPath: heatmapPath,
       );
 
-      // Persist the scan (image + classification) to Supabase. If this
-      // fails, the user still sees their result — we just surface a
-      // warning rather than blocking navigation on a save error.
       try {
         await _scanService.saveScan(args);
       } catch (saveError) {
@@ -212,7 +213,7 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
     // Keep a handle to *this specific* snack bar instance so both the
     // OK button and our manual timer close exactly this one.
     late final ScaffoldFeatureController<SnackBar, SnackBarClosedReason>
-        controller;
+    controller;
 
     controller = messenger.showSnackBar(
       SnackBar(
@@ -290,6 +291,77 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
     // Belt-and-suspenders: force-dismiss after exactly 4 seconds if
     // the user hasn't already tapped OK.
     Timer(const Duration(seconds: 4), () => controller.close());
+  }
+
+  void _showLowConfidenceDialog() {
+    final colors = AppColors.of(context);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+        ),
+        backgroundColor: colors.surface,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: colors.danger,
+                    size: 26,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    'Unable to Verify Leaf',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Onest',
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                "We couldn't verify a leaf in the image. Please try again with a clearer photo.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontFamily: 'Onest',
+                  color: colors.textGray,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Try Again',
+                    style: TextStyle(
+                      color: colors.primary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Onest',
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // ── Build ─────────────────────────────────────────────────
