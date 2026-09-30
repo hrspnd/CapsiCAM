@@ -295,53 +295,46 @@ class _CaptureImageScreenState extends State<CaptureImageScreen> {
 
   void _showLowConfidenceDialog() {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xxl),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         backgroundColor: colors.surface,
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
+          padding: const EdgeInsets.only(
+            left: AppSpacing.xl,
+            right: AppSpacing.xl,
+            top: AppSpacing.xl,
+            bottom: AppSpacing.md,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: colors.danger,
-                    size: 26,
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    'Unable to Verify Leaf',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Onest',
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                ],
+              Text(
+                l10n.unableToVerifyLeaf,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Onest',
+                  color: colors.textPrimary,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                "We couldn't verify a leaf in the image. Please try again with a clearer photo.",
-                textAlign: TextAlign.center,
+                l10n.couldntVerifyLeaf,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 13,
                   fontFamily: 'Onest',
                   color: colors.textGray,
-                  height: 1.4,
+                  height: 1.5,
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(

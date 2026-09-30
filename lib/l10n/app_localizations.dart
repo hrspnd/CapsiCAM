@@ -422,6 +422,18 @@ abstract class AppLocalizations {
   /// **'Analyze'**
   String get analyzeButton;
 
+  /// No description provided for @unableToVerifyLeaf.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to Verify Leaf'**
+  String get unableToVerifyLeaf;
+
+  /// No description provided for @couldntVerifyLeaf.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t verify a leaf in the image. Please try again with a clearer photo.'**
+  String get couldntVerifyLeaf;
+
   /// No description provided for @notSavedToHistory.
   ///
   /// In en, this message translates to:

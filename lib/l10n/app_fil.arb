@@ -58,6 +58,8 @@
   "uploadFromGallery": "Mag-upload mula sa gallery",
   "chooseDifferentPhoto": "Pumili ng Ibang Larawan",
   "analyzeButton": "Suriin",
+  "unableToVerifyLeaf": "Hindi matukoy kung may dahon",
+  "couldntVerifyLeaf": "Hindi namin ma-verify na may dahon sa larawan. Pakisubukang muli gamit ang mas malinaw na litrato.",
   "notSavedToHistory": "Hindi na-save sa history",
   "scanResultsShownBelow": "Makikita pa rin ang resulta ng iyong scan sa ibaba, pero hindi ito na-save sa iyong history.",
 

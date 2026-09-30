@@ -60,6 +60,8 @@
   "uploadFromGallery": "Upload from Gallery",
   "chooseDifferentPhoto": "Choose Different Photo",
   "analyzeButton": "Analyze",
+  "unableToVerifyLeaf": "Unable to Verify Leaf",
+  "couldntVerifyLeaf": "We couldn't verify a leaf in the image. Please try again with a clearer photo.",
   "notSavedToHistory": "Not saved to history",
   "scanResultsShownBelow": "Your scan result is still shown below, but couldn't be saved to your history.",
 

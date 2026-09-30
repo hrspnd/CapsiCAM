@@ -176,6 +176,13 @@ class AppLocalizationsFil extends AppLocalizations {
   String get analyzeButton => 'Suriin';
 
   @override
+  String get unableToVerifyLeaf => 'Hindi matukoy kung may dahon';
+
+  @override
+  String get couldntVerifyLeaf =>
+      'Hindi namin ma-verify na may dahon sa larawan. Pakisubukang muli gamit ang mas malinaw na litrato.';
+
+  @override
   String get notSavedToHistory => 'Hindi na-save sa history';
 
   @override

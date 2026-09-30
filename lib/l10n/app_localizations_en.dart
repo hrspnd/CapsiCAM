@@ -175,6 +175,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyzeButton => 'Analyze';
 
   @override
+  String get unableToVerifyLeaf => 'Unable to Verify Leaf';
+
+  @override
+  String get couldntVerifyLeaf =>
+      'We couldn\'t verify a leaf in the image. Please try again with a clearer photo.';
+
+  @override
   String get notSavedToHistory => 'Not saved to history';
 
   @override
