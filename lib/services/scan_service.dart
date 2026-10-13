@@ -10,7 +10,7 @@ import '../screens/scan_results_screen.dart'; // for ScanResultsArgs
 class ScanService {
   final SupabaseClient _client = Supabase.instance.client;
   static const _bucket = 'scan-images';
-  static const _apiBaseUrl = 'http://192.168.100.215:8000';
+  static const String _apiBaseUrl = 'https://capsicam-api.onrender.com';
 
   // scan-images is a private bucket, so we can't use getPublicUrl() —
   // that returns a link that 403s. Instead we generate a signed URL.
