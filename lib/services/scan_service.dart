@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../screens/scan_results_screen.dart'; // for ScanResultsArgs
@@ -10,7 +8,6 @@ import '../screens/scan_results_screen.dart'; // for ScanResultsArgs
 class ScanService {
   final SupabaseClient _client = Supabase.instance.client;
   static const _bucket = 'scan-images';
-  static const _apiBaseUrl = 'http://192.168.100.215:8000';
 
   // scan-images is a private bucket, so we can't use getPublicUrl() —
   // that returns a link that 403s. Instead we generate a signed URL.
@@ -66,35 +63,17 @@ class ScanService {
     final confidenceBls = args.predictions['Bacterial_Leaf_Spot'] ?? 0.0;
     final confidenceCls = args.predictions['Cercospora_Leaf_Spot'] ?? 0.0;
 
-    // ── Save scan through Dockerized FastAPI ──────────────
-    final accessToken = _client.auth.currentSession?.accessToken;
-
-    if (accessToken == null) {
-      throw StateError('Cannot save scan: no active session.');
-    }
-
-    final response = await http.post(
-      Uri.parse('$_apiBaseUrl/scans'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-      body: jsonEncode({
-        'image_url': imageUrl,
-        'classification': args.label.toLowerCase(),
-        'confidence_healthy': confidenceHealthy,
-        'confidence_bls': confidenceBls,
-        'confidence_cls': confidenceCls,
-        'image_source': args.source.toLowerCase(),
-        'heatmap_url': heatmapUrl,
-        'scanned_at': args.date.toUtc().toIso8601String(),
-      }),
-    );
-
-    if (response.statusCode != 201) {
-      throw Exception(
-        'Failed to save scan through API (${response.statusCode})',
-      );
-    }
+    // ── Insert scan row ─────────────────────────────────────
+    await _client.from('scans').insert({
+      'user_id': userId,
+      'image_url': imageUrl,
+      'classification': args.label.toLowerCase(),
+      'confidence_healthy': confidenceHealthy,
+      'confidence_bls': confidenceBls,
+      'confidence_cls': confidenceCls,
+      'image_source': args.source.toLowerCase(),
+      'heatmap_url': heatmapUrl,
+      'scanned_at': args.date.toUtc().toIso8601String(),
+    });
   }
 }
