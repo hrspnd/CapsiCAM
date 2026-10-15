@@ -49,13 +49,13 @@ The Docker image **contains the Android APK for distribution**. Docker does **no
 **1. Pull the image:**
 
 ```bash
-docker pull capsicam/capsicam-apk:latest
+docker pull --platform linux/amd64 capsicam/capsicam-apk:latest
 ```
 
 **2. Extract the APK** into the current directory:
 
 ```bash
-docker create --name capsicam-download capsicam/capsicam-apk:latest
+docker create --platform linux/amd64 --name capsicam-demo capsicam/capsicam-apk:latest
 docker cp capsicam-download:/app/CapsiCAM.apk ./CapsiCAM.apk
 docker rm capsicam-download
 ```
