@@ -130,6 +130,17 @@ The Dockerfile copies the APK to `/app/CapsiCAM.apk` inside the image. The publi
 - The distributed APK is intended for Android; it is not an iOS installer.
 - Classification is an assistive tool and should not be treated as a definitive plant disease diagnosis.
 
+## Team Members
+
+CapsiCAM was developed as an undergraduate group thesis project by Computer Science students from Holy Angel University.
+
+| Name | Role | GitHub |
+|---|---|---|
+| Mary Alexa Ysabelle V. Pineda | Full-Stack Developer | [@hrspnd](https://github.com/hrspnd) |
+| Maria Josephine M. Magat | Frontend Developer | [@jsphnmgt](https://github.com/jsphnmgt) |
+| Amber Kaia J. Rebusa | Documentation | [@juliankaiaaa](https://github.com/juliankaiaaa) |
+| Jeanne Clarisse T. Bermudo | Documentation | [@merwwki](https://github.com/merwwki) |
+
 ## Source code and distribution
 
 - **GitHub:** https://github.com/hrspnd/CapsiCAM
